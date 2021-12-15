@@ -86,6 +86,7 @@ impl Rules {
 	fn run_step(&self, template :&str) -> String {
 		let mut res = String::new();
 		for p in template.as_bytes().windows(2) {
+			// TODO use array_windows once available
 			let p @ [p0, _] = if let [p0, p1] = p {
 				[*p0, *p1]
 			} else {
@@ -120,6 +121,7 @@ impl Polymer {
 			pair_occurences: HashMap::new(),
 		};
 		for p in s.as_bytes().windows(2) {
+			// TODO use array_windows once available
 			let p = if let [p0, p1] = p {
 				[*p0, *p1]
 			} else {
