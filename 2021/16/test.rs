@@ -47,6 +47,7 @@ fn test_operator_2() -> Result<()> {
 fn test_operator_3() -> Result<()> {
 	let p = parse_packet("8A004A801A8002F478")?;
 	assert_eq!(p.version, 4);
+	// TODO use let_else once available
 	if let PacketKind::Operator(ps) = &p.kind {
 		assert_eq!(ps.len(), 1);
 		assert_eq!(ps[0].version, 1);
