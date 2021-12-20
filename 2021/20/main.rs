@@ -77,8 +77,6 @@ impl Image {
 				let mut idx = 0;
 				for y_k in (y as isize - 1)..=(y as isize + 1) {
 					for x_k in (x as isize - 1)..=(x as isize + 1) {
-						/*let x_ko = (x as isize + 2 - x_k) - 1;
-						let y_ko = (y as isize + 2 - y_k) - 1;*/
 						let x_ko = x_k - 1;
 						let y_ko = y_k - 1;
 						let b = if (x_ko < 0) || (y_ko < 0)
@@ -94,7 +92,6 @@ impl Image {
 					}
 					dprint!("\n");
 				}
-				//let idx = idx.reverse_bits() >> (usize::BITS - 9);
 				dprint!("{:09b}\n", idx);
 				let lit = algo[idx];
 				res[y][x] = lit;
