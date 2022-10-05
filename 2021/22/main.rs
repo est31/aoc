@@ -9,7 +9,8 @@ mod test;
 
 fn main() {
 	let commands = parse_commands(INPUT);
-	println!("Enabled after commands: {}", run_commands_simple(&commands).len());
+	println!("Enabled after commands in initialization region: {}", run_commands_simple(&commands).len());
+	println!("Enabled after commands: {}", run_commands(&commands));
 }
 
 type Cube = [RangeInclusive<i32>; 3];
@@ -63,7 +64,7 @@ fn run_commands_simple(cmds :&[(bool, Cube)]) -> HashSet<(i32, i32, i32)> {
 	enabled
 }
 
-fn compress_to_diffs(cmds :&[(bool, Cube)], cmds_diffs :&mut [(bool, [Range<usize>; 3])], d: usize) -> Vec<i32> {
+fn compress_indices(cmds :&[(bool, Cube)], cmds_compressed :&mut [(bool, [Range<usize>; 3])], d: usize) -> Vec<i32> {
 	let mut hm = HashMap::<i32, Vec<(usize, bool)>>::new();
 	let it = cmds.iter()
 		.enumerate()
@@ -78,7 +79,7 @@ fn compress_to_diffs(cmds :&[(bool, Cube)], cmds_diffs :&mut [(bool, [Range<usiz
 	let r = indices_c.into_iter().enumerate()
 		.map(|(idx_i, (v, l))| {
 			for (i, b) in l {
-				let r = &mut cmds_diffs[i].1[d];
+				let r = &mut cmds_compressed[i].1[d];
 				if b {
 					*r = idx_i..r.end;
 				} else {
@@ -88,21 +89,21 @@ fn compress_to_diffs(cmds :&[(bool, Cube)], cmds_diffs :&mut [(bool, [Range<usiz
 			v
 		})
 		.collect::<Vec<_>>();
-	println!("{r:?}");
+	//println!("{r:?}");
 	r
 }
 
 fn run_commands(cmds :&[(bool, Cube)]) -> u64 {
-	let mut cmds_diffs = cmds.iter()
+	let mut cmds_compressed = cmds.iter()
 		.map(|(b, _)| (*b, [0..0, 0..0, 0..0]))
 		.collect::<Vec<_>>();
-	let indices_x = compress_to_diffs(cmds, &mut cmds_diffs, 0);
-	let indices_y = compress_to_diffs(cmds, &mut cmds_diffs, 1);
-	let indices_z = compress_to_diffs(cmds, &mut cmds_diffs, 2);
+	let indices_x = compress_indices(cmds, &mut cmds_compressed, 0);
+	let indices_y = compress_indices(cmds, &mut cmds_compressed, 1);
+	let indices_z = compress_indices(cmds, &mut cmds_compressed, 2);
 
-	println!("cmds compressed: {cmds_diffs:?}");
+	//println!("cmds compressed: {cmds_compressed:?}");
 	let mut enabled = HashSet::new();
-	for (cmd, ranges) in cmds_diffs.iter() {
+	for (cmd, ranges) in cmds_compressed.iter() {
 		for x in ranges[0].clone() {
 			for y in ranges[1].clone() {
 				for z in ranges[2].clone() {
