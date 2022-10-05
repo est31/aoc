@@ -117,13 +117,13 @@ fn run_commands(cmds :&[(bool, Cube)]) -> u64 {
 		}
 	}
 	enabled.into_iter()
-		.filter_map(|(x, y, z)| {
-			let dx = indices_x.get(x + 1)? - indices_x[x];
-			let dy = indices_y.get(y + 1)? - indices_y[y];
-			let dz = indices_z.get(z + 1)? - indices_z[z];
+		.map(|(x, y, z)| {
+			let dx = indices_x[x + 1] - indices_x[x];
+			let dy = indices_y[y + 1] - indices_y[y];
+			let dz = indices_z[z + 1] - indices_z[z];
 			let p = (dx as i64) * (dy as i64) * (dz as i64);
 			//println!("({x}, {y}, {z}) -> {p}");
-			Some(p)
+			p
 		})
 		.sum::<i64>() as _
 }
