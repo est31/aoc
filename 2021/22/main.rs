@@ -1,6 +1,6 @@
 use std::str::FromStr;
-use std::ops::RangeInclusive;
-use std::collections::HashSet;
+use std::ops::{RangeInclusive, Range};
+use std::collections::{HashSet, HashMap};
 
 const INPUT :&str = include_str!("input");
 
@@ -63,159 +63,66 @@ fn run_commands_simple(cmds :&[(bool, Cube)]) -> HashSet<(i32, i32, i32)> {
 	enabled
 }
 
-fn cubes_overlap(c1 :&Cube, c2 :&Cube) -> bool {
-	c1.iter()
-		.zip(c2)
-		.all(|(r1, r2)| r1.contains(r2.start()) || r1.contains(r2.end())
-			|| r2.contains(r1.start()) || r2.contains(r1.end()))
-}
-
-/*
-fn interval_intersection(r1 :&RangeInclusive<i32>, r2 :&RangeInclusive<i32>) -> Option<RangeInclusive<i32>> {
-	match (r1.contains(r2.start()), r1.contains(r2.end())) {
-		// r2 is a subset of r1.
-		// [ ( ) ]
-		(true, true) => Some(r2.clone()),
-
-		// r2 starts before r1, but ends in r1.
-		// ( [ ) ]
-		(false, true) => Some((*r1.start())..=(*r2.end())),
-
-		// r2 starts inside r1, but ends outside of it.
-		// [ ( ] )
-		(true, false) => Some((*r2.start())..=(*r1.end())),
-
-		// r2 neither starts nor ends in r1.
-		// We need to look further.
-		(false, false) => match (r2.contains(r1.start()), r2.contains(r1.end())) {
-			// r1 is a subset of r2.
-			(true, true) => Some(r1.clone()),
-			// Disjoint intervals
-			(false, false) => None,
-			// This would imply that at least end or start of r2
-			// are inside r1, which isn't the case. So unreachable.
-			_ => unreachable!(),
-		},
+fn compress_to_diffs(cmds :&[(bool, Cube)], cmds_diffs :&mut [(bool, [Range<usize>; 3])], d: usize) -> Vec<i32> {
+	let mut hm = HashMap::<i32, Vec<(usize, bool)>>::new();
+	let it = cmds.iter()
+		.enumerate()
+		.map(|(i, (_, c))| [((i, true), *c[d].start()), ((i, false), *c[d].end() + 1)].into_iter())
+		.flatten();
+	for (i_b, v) in it {
+		hm.entry(v).or_default().push(i_b);
 	}
-}
-
-fn cubes_intersection(c1 :&Cube, c2 :&Cube) -> Cube {
-	let x_int = interval_intersection(&c1[0], &c2[0]).unwrap();
-	let y_int = interval_intersection(&c1[1], &c2[1]).unwrap();
-	let z_int = interval_intersection(&c1[2], &c2[2]).unwrap();
-	[x_int, y_int, z_int]
+	let mut indices_c = hm.into_iter()
+		.collect::<Vec<_>>();
+	indices_c.sort();
+	let r = indices_c.into_iter().enumerate()
+		.map(|(idx_i, (v, l))| {
+			for (i, b) in l {
+				let r = &mut cmds_diffs[i].1[d];
+				if b {
+					*r = idx_i..r.end;
+				} else {
+					*r = (r.start)..idx_i;
+				}
+			}
+			v
+		})
+		.collect::<Vec<_>>();
+	println!("{r:?}");
+	r
 }
 
 fn run_commands(cmds :&[(bool, Cube)]) -> u64 {
-	let mut sum :i64 = 0;
+	let mut cmds_diffs = cmds.iter()
+		.map(|(b, _)| (*b, [0..0, 0..0, 0..0]))
+		.collect::<Vec<_>>();
+	let indices_x = compress_to_diffs(cmds, &mut cmds_diffs, 0);
+	let indices_y = compress_to_diffs(cmds, &mut cmds_diffs, 1);
+	let indices_z = compress_to_diffs(cmds, &mut cmds_diffs, 2);
 
-	println!("number of commands: {}", cmds.len());
-	for (i, (cmd, ranges)) in cmds.iter().enumerate() {
-		// In the outer loop, we are only interested in
-		// positive commands
-		if !*cmd {
-			continue;
-		}
-		sum += cube_size(ranges);
-		println!("sum is {}", sum);
-		if i + 1 == cmds.len() {
-			continue;
-		}
-		let intersections = cmds[(i+1)..].iter()
-			.filter(|(_, c)| cubes_overlap(&ranges, &cranges))
-			.map(|(ccmd, cranges)| cubes_intersection(ranges, cranges))
-			.collect::<Vec<_>>();
-		/*
-		for (_ccmd, cranges) in cmds[(i+1)..].iter() {
-			if !cubes_overlap(&ranges, &cranges) {
-				continue;
-			}
-			sum -= cube_size(&cubes_intersection(ranges, cranges));
-			println!("    sum is {}", sum);
-		}*/
-		// TODO: avoid "double removals" by adding back intersections of any pair
-		// of removals
-	}
-	assert!(sum >= 0, "sum is {} and thus smaller than 0", sum);
-	sum as u64
-}
-*/
-
-fn cube_size(c :&Cube) -> i64 {
-	fn siz(r :&RangeInclusive<i32>) -> i64 {
-		(*r.end() - *r.start()).abs() as i64 + 1
-	}
-	siz(&c[0]) * siz(&c[1]) * siz(&c[2])
-}
-
-fn interval_difference(r1 :&RangeInclusive<i32>, r2 :&RangeInclusive<i32>) -> Vec<RangeInclusive<i32>> {
-	if r1.contains(r2.start()) || r1.contains(r2.end()) {
-		// One of start and end of r2 is inside r1.
-		// One of three cases (modulo equality/overlap):
-		// ( [ ) ]
-		//          [ ( ) ]
-		//                   [ ( ] )
-		// We return up to two different ranges
-		let mut res = Vec::new();
-		if r1.start() < r2.start() {
-			res.push(*r1.start()..=(r2.start() - 1));
-		}
-		if r2.end() < r1.end() {
-			res.push((r2.end() + 1)..=*r1.end());
-		}
-		res
-	} else if r2.contains(r1.start()) && r2.contains(r1.end()) {
-		// r1 wholly inside r2. Delete r1.
-		vec![]
-	} else {
-		// Disjoint intervals. Not allowed.
-		panic!("Intervals {:?} and {:?} are disjoint!", r1, r2);
-	}
-}
-
-/// Determines the difference of two (overlapping) cubes as list of cubes.
-///
-/// Remove c2 from c1
-fn cubes_difference(c1 :&Cube, c2 :&Cube) -> Vec<Cube> {
-	let x_diff = interval_difference(&c1[0], &c2[0]);
-	let y_diff = interval_difference(&c1[1], &c2[1]);
-	let z_diff = interval_difference(&c1[2], &c2[2]);
-
-	let mut intervals = vec![(x_diff, 0), (y_diff, 1), (z_diff, 2)];
-	intervals.sort_by_key(|(diff, _c)| diff.len());
-	intervals.reverse();
-
-	/*for (diffs, coord) in intervals[0] {
-		diffs
-	}*/
-
-	let mut res = Vec::new();
-	res
-}
-
-fn run_commands(cmds :&[(bool, Cube)]) -> u64 {
-	let mut cubes = HashSet::<Cube>::new();
-
-	for (cmd, ranges) in cmds {
-		let mut new_cubes = HashSet::new();
-		for cube in cubes.iter() {
-			if !cubes_overlap(cube, &ranges) {
-				new_cubes.insert(cube.clone());
-				continue;
-			}
-			let diff = cubes_difference(&cube, &ranges);
-			for c in diff {
-				new_cubes.insert(c);
+	println!("cmds compressed: {cmds_diffs:?}");
+	let mut enabled = HashSet::new();
+	for (cmd, ranges) in cmds_diffs.iter() {
+		for x in ranges[0].clone() {
+			for y in ranges[1].clone() {
+				for z in ranges[2].clone() {
+					if *cmd {
+						enabled.insert((x, y, z));
+					} else {
+						enabled.remove(&(x, y, z));
+					}
+				}
 			}
 		}
-		if *cmd {
-			new_cubes.insert(ranges.clone());
-		}
-		cubes = new_cubes;
 	}
-	cubes.iter()
-		.map(|c| cube_size(&c))
-		.sum::<i64>()
-		.try_into()
-		.unwrap()
+	enabled.into_iter()
+		.filter_map(|(x, y, z)| {
+			let dx = indices_x.get(x + 1)? - indices_x[x];
+			let dy = indices_y.get(y + 1)? - indices_y[y];
+			let dz = indices_z.get(z + 1)? - indices_z[z];
+			let p = (dx as i64) * (dy as i64) * (dz as i64);
+			//println!("({x}, {y}, {z}) -> {p}");
+			Some(p)
+		})
+		.sum::<i64>() as _
 }

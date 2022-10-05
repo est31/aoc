@@ -43,6 +43,22 @@ fn test_1_modified() {
 	assert_eq!(run_commands(&cm) as usize, rcs(&cm).len());
 }
 
+const INPUT_0 :&str = "\
+on x=10..12,y=10..12,z=10..12
+on x=10..12,y=10..12,z=10..14
+off x=10..12,y=10..12,z=10..13
+";
+
+#[test]
+fn test_0() {
+	let cm = parse_commands(INPUT_0);
+	let rcs = run_commands_simple;
+	assert_eq!(run_commands(&cm[..1]) as usize, rcs(&cm[..1]).len());
+	assert_eq!(run_commands(&cm[..2]) as usize, rcs(&cm[..2]).len());
+	assert_eq!(run_commands(&cm[..3]) as usize, rcs(&cm[..3]).len());
+	assert_eq!(run_commands(&cm) as usize, rcs(&cm).len());
+}
+
 fn cube_list() -> Vec<Cube> {
 	let mut cube_list = Vec::new();
 	let l = 2;
