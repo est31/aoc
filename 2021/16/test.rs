@@ -47,25 +47,16 @@ fn test_operator_2() -> Result<()> {
 fn test_operator_3() -> Result<()> {
 	let p = parse_packet("8A004A801A8002F478")?;
 	assert_eq!(p.version, 4);
-	// TODO use let_else once available
-	if let PacketKind::Operator(ps) = &p.kind {
-		assert_eq!(ps.len(), 1);
-		assert_eq!(ps[0].version, 1);
-		if let PacketKind::Operator(ps) = &ps[0].kind {
-			assert_eq!(ps[0].version, 5);
-			if let PacketKind::Operator(ps) = &ps[0].kind {
-				assert_eq!(ps[0].version, 6);
-				// TODO use assert_matches once available
-				assert!(matches!(ps[0].kind, PacketKind::Literal(_)));
-			} else {
-				panic!()
-			}
-		} else {
-			panic!()
-		}
-	} else {
-		panic!();
-	}
+	let PacketKind::Operator(ps) = &p.kind else { panic!() };
+	assert_eq!(ps.len(), 1);
+	assert_eq!(ps[0].version, 1);
+	let PacketKind::Operator(ps) = &ps[0].kind else { panic!() };
+	assert_eq!(ps[0].version, 5);
+	let PacketKind::Operator(ps) = &ps[0].kind else { panic!() };
+	assert_eq!(ps[0].version, 6);
+	//TODO use assert_matches once available
+	assert!(matches!(ps[0].kind, PacketKind::Literal(_)));
+
 	assert_eq!(p.version_sum(), 16);
 	Ok(())
 }

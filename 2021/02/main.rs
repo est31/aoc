@@ -32,10 +32,7 @@ fn final_position(input :&str) -> Result<(u64, u64)> {
 		.filter(|l| !l.is_empty());
 	for l in lines {
 		let mut l_it = l.split(' ');
-		// TODO: use let_else once available
-		let (command, number) = if let (Some(c), Some(n))  = (l_it.next(), l_it.next()) {
-			(c, n)
-		} else {
+		let (Some(command), Some(number)) = (l_it.next(), l_it.next()) else {
 			Err(format!("Parse error at line: '{}'", l))?
 		};
 		let number = u64::from_str(number)?;
@@ -57,10 +54,7 @@ fn final_position_ext(input :&str) -> Result<(u64, u64)> {
 		.filter(|l| !l.is_empty());
 	for l in lines {
 		let mut l_it = l.split(' ');
-		// TODO: use let_else once available
-		let (command, number) = if let (Some(c), Some(n))  = (l_it.next(), l_it.next()) {
-			(c, n)
-		} else {
+		let (Some(command), Some(number)) = (l_it.next(), l_it.next()) else {
 			Err(format!("Parse error at line: '{}'", l))?
 		};
 		let number = u64::from_str(number)?;

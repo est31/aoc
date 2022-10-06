@@ -96,10 +96,7 @@ impl BingoBoards {
 		}))
 	}
 	fn play_number(&mut self, n :u16) -> Vec<(u16, u16)> {
-		// TODO use let_else once available
-		let indices = if let Some(indices) = self.indices.get(&n) {
-			indices
-		} else {
+		let Some(indices) = self.indices.get(&n) else {
 			return Vec::new();
 		};
 		let mut winning_boards = Vec::new();
