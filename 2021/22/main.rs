@@ -116,6 +116,7 @@ fn run_commands(cmds :&[(bool, Cube)]) -> u64 {
 			}
 		}
 	}
+	//println!("Number of enabled compressed regions: {}", enabled.len());
 	enabled.into_iter()
 		.map(|(x, y, z)| {
 			let dx = indices_x[x + 1] - indices_x[x];
