@@ -102,29 +102,46 @@ fn run_commands(cmds :&[(bool, Cube)]) -> u64 {
 	let indices_z = compress_indices(cmds, &mut cmds_compressed, 2);
 
 	//println!("cmds compressed: {cmds_compressed:?}");
-	let mut enabled = HashSet::new();
-	for (cmd, ranges) in cmds_compressed.iter() {
-		for x in ranges[0].clone() {
-			for y in ranges[1].clone() {
-				for z in ranges[2].clone() {
-					if *cmd {
-						enabled.insert((x, y, z));
-					} else {
-						enabled.remove(&(x, y, z));
+	let tc = std::thread::available_parallelism().map(|u| u.get()).unwrap_or(1);
+	let sum = std::thread::scope(|s| {
+		let indices_x = &indices_x;
+		let indices_y = &indices_y;
+		let indices_z = &indices_z;
+		let cmds_compressed = &cmds_compressed;
+		let threads = (0..tc)
+			.map(|ti| s.spawn(move || {
+				let mut enabled = HashSet::new();
+				for (cmd, ranges) in cmds_compressed.iter() {
+					for x in ranges[0].clone() {
+						if x % tc != ti {
+							continue;
+						}
+						for y in ranges[1].clone() {
+							for z in ranges[2].clone() {
+								if *cmd {
+									enabled.insert((x, y, z));
+								} else {
+									enabled.remove(&(x, y, z));
+								}
+							}
+						}
 					}
 				}
-			}
-		}
-	}
-	//println!("Number of enabled compressed regions: {}", enabled.len());
-	enabled.into_iter()
-		.map(|(x, y, z)| {
-			let dx = indices_x[x + 1] - indices_x[x];
-			let dy = indices_y[y + 1] - indices_y[y];
-			let dz = indices_z[z + 1] - indices_z[z];
-			let p = (dx as i64) * (dy as i64) * (dz as i64);
-			//println!("({x}, {y}, {z}) -> {p}");
-			p
-		})
-		.sum::<i64>() as _
+				enabled.into_iter()
+					.map(|(x, y, z)| {
+						let dx = indices_x[x + 1] - indices_x[x];
+						let dy = indices_y[y + 1] - indices_y[y];
+						let dz = indices_z[z + 1] - indices_z[z];
+						let p = (dx as i64) * (dy as i64) * (dz as i64);
+						//println!("({x}, {y}, {z}) -> {p}");
+						p
+					})
+					.sum::<i64>()
+			}))
+			.collect::<Vec<_>>();
+		threads.into_iter()
+			.map(|t| t.join().unwrap())
+			.sum::<i64>()
+	});
+	sum as _
 }
