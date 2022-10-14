@@ -15,7 +15,27 @@ fn test_1() {
 	assert!(!scene.is_perfect());
 
 	let mut search = SceneSearch::new(scene);
-	assert_eq!(12521, search.search());
+	assert_eq!(Some(12521), search.search_for_steps(20_000));
+}
+
+const EXAMPLE_INPUT_UNFOLDED :&str = "\
+#############
+#...........#
+###B#C#B#D###
+  #D#C#B#A#
+  #D#B#A#C#
+  #A#D#C#A#
+  #########
+";
+
+#[test]
+fn test_1_unfolded() {
+	let scene = Scene::parse_with_unfolded(EXAMPLE_INPUT, true);
+	assert_eq!(EXAMPLE_INPUT_UNFOLDED, scene.to_string());
+	assert!(!scene.is_perfect());
+
+	let mut search = SceneSearch::new(scene);
+	assert_eq!(Some(44169), search.search_for_steps(20_000));
 }
 
 const END_STATE :&str = "\
@@ -71,4 +91,23 @@ fn test_1_m1() {
 
 	let mut search = SceneSearch::new(scene);
 	assert_eq!(Some(8), search.search_for_steps(2));
+}
+
+
+const EXAMPLE_INPUT_FINAL_M2 :&str = "\
+#############
+#.....D.D.A.#
+###.#B#C#.###
+  #A#B#C#.#
+  #########
+";
+
+#[test]
+fn test_1_m2() {
+	let scene = Scene::parse(EXAMPLE_INPUT_FINAL_M2);
+	assert_eq!(EXAMPLE_INPUT_FINAL_M2, scene.to_string());
+	assert!(!scene.is_perfect());
+
+	let mut search = SceneSearch::new(scene);
+	assert_eq!(Some(7008), search.search_for_steps(100));
 }

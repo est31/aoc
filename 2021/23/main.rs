@@ -10,6 +10,11 @@ fn main() {
 	let mut search = SceneSearch::new(scene);
 	let energy = search.search();
 	println!("Energy required to organize: {energy}");
+
+	let scene_uf = Scene::parse_with_unfolded(INPUT, true);
+	let mut search_uf = SceneSearch::new(scene_uf);
+	let energy_uf = search_uf.search();
+	println!("Energy required to organize for unfolded: {energy_uf}");
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -64,27 +69,40 @@ impl Field {
 	}
 }
 
+fn parse_line(line :&str) -> [Field; 11] {
+	let mut fields = [Field::Empty('.'); 11];
+	let mut ch_it = line.chars();
+	ch_it.next();
+	for (ch, field) in ch_it.zip(fields.iter_mut()) {
+		let Some(fl) = Field::from_ch(ch) else {
+			panic!("None of expected characters '{ch}'");
+		};
+		*field = fl;
+	}
+	fields
+}
+
 #[derive(PartialEq, Eq, Hash, Clone)]
 struct Scene {
-	fields :[[Field; 11]; 3],
+	fields :Vec<[Field; 11]>,
 	imperfect_amphipods :Vec<(usize, usize)>,
 }
 
 impl Scene {
 	fn parse(input :&str) -> Self {
-		let mut fields = [[Field::Empty('.'); 11]; 3];
+		Self::parse_with_unfolded(input, false)
+	}
+	fn parse_with_unfolded(input :&str, unfolded :bool) -> Self {
+		let mut fields = Vec::new();
 		let mut lines = input.lines();
 		assert_eq!(lines.next(), Some("#############"));
 		let mut imperfect_amphipods = Vec::new();
-		for (line, fl) in lines.zip(fields.iter_mut()) {
-			let mut ch_it = line.chars();
-			ch_it.next();
-			for (ch, field) in ch_it.zip(fl.iter_mut()) {
-				let Some(fl) = Field::from_ch(ch) else {
-					panic!("None of expected characters '{ch}'");
-				};
-				*field = fl;
+		for (linei, line) in lines.enumerate().take(3) {
+			if unfolded && linei == 2 {
+				fields.push(parse_line("  #D#C#B#A#"));
+				fields.push(parse_line("  #D#B#A#C#"));
 			}
+			fields.push(parse_line(line));
 		}
 		for (linei, fl) in fields.iter().enumerate() {
 			for (coli, field) in fl.iter().enumerate() {
@@ -92,11 +110,12 @@ impl Scene {
 					continue;
 				};
 				if epc == coli {
-					if linei == 2 || (linei == 1 && fields[2][coli] == *field) {
+					let Some(lines_below) = fields.get((linei + 1)..) else { continue };
+					if lines_below.iter().all(|l| l[coli] == *field) {
 						continue;
 					}
 				}
-				//println!("Imperfect {field:?} at {linei}");
+				// println!("Imperfect {field:?} at {linei},{coli}");
 				imperfect_amphipods.push((linei, coli));
 			}
 		}
@@ -115,21 +134,39 @@ impl Scene {
 		match linei {
 			0 => {
 				// Move from the hallway into the end destination (if possible)
+
 				// Whether we can descend in the destination, and if yes,
 				// the descend distance.
 				let land_distance = {
-					let f1 = self.fields[1][end_col];
-					let f2 = self.fields[2][end_col];
-					if !f1.is_empty() {
+					let mut descend_dist = None;
+					let can_descend = self.fields.iter()
+						.enumerate()
+						.all(|(i, fl)| {
+							let field = fl[end_col];
+							if descend_dist.is_none() {
+								if field.is_empty() {
+									true
+								} else if field == kind {
+									descend_dist = Some(i as u32 - 1);
+									true
+								} else {
+									false
+								}
+							} else {
+								field == kind
+							}
+						});
+					// TODO simplify this with let chains once available
+					if !can_descend {
 						return Vec::new();
+					} else if let Some(dist) = descend_dist {
+						// Check whether nothing is empty. This shouldn't
+						// really occur, as can_descend should have been false.
+						assert!(dist != 0, "Nothing is empty for descent of {linei},{coli} at {end_col} in scene: {self}");
+						dist
 					} else {
-						if f2.is_empty() {
-							2
-						} else if f2 == kind {
-							1
-						} else {
-							return Vec::new();
-						}
+						// Everything is empty
+						self.fields.len() as u32 - 1
 					}
 				};
 				if self.hallway_is_free(coli, end_col) {
@@ -141,17 +178,24 @@ impl Scene {
 					Vec::new()
 				}
 			},
-			1 | 2 => {
+			_ => {
 				// Move from the start destination to somewhere (legal) into the hallway
-				// Whether we can ascend to the hallway, and if yes, the cost
-				let ascent_cost = if linei == 2 {
-					if !self.fields[1][coli].is_empty() {
-						return Vec::new();
-					}
-					2
-				} else {
-					1
-				};
+				let ascent_cost = linei as u32;
+
+				// Whether we can ascend to the hallway.
+				// We only have to check the one field direcly above us,
+				// As we never store scenes with gaps in the side rooms.
+				if !self.fields[linei - 1][coli].is_empty() {
+					return Vec::new();
+				}
+				/*
+				let may_ascend = self.fields[..linei].iter().rev()
+					.all(|fl| fl[coli].is_empty());
+				if !may_ascend {
+					return Vec::new();
+				}
+				*/
+
 				// Legal columns in the halway to stop
 				let legal_hallway_cols = [0, 1, 3, 5, 7, 9, 10];
 				legal_hallway_cols.into_iter()
@@ -163,7 +207,6 @@ impl Scene {
 					})
 					.collect::<Vec<_>>()
 			},
-			_ => unreachable!(),
 		}
 	}
 	fn perform_move_for(&mut self, from :(usize, usize), to :(usize, usize)) {
@@ -210,11 +253,13 @@ impl std::fmt::Display for Scene {
 			write!(f, "{}", field.ch())?;
 		}
 		writeln!(f, "#")?;
-		write!(f, " ")?;
-		for field in &fields[2][..10] {
-			write!(f, "{}", field.ch())?;
+		for fl in &fields[2..] {
+			write!(f, " ")?;
+			for field in &fl[..10] {
+				write!(f, "{}", field.ch())?;
+			}
+			writeln!(f, "")?;
 		}
-		writeln!(f, "")?;
 		writeln!(f, "  #########")?;
 		Ok(())
 	}
@@ -267,6 +312,7 @@ impl SceneSearch {
 			}
 		}
 	}
+	#[cfg(test)]
 	fn search_for_steps(&mut self, steps :u32) -> Option<u32> {
 		for _ in 0..steps {
 			if let Some(s) = self.step() {
