@@ -8,7 +8,7 @@ fn main() {
 	let trees = count_trees(&scene);
 	println!("trees with 3/1 slope: {trees}");
 	let trees = count_trees_product(&scene);
-	println!("trees with 3/1 slope: {trees}");
+	println!("product for different slopes: {trees}");
 }
 
 fn parse(input :&str) -> Vec<Vec<bool>> {
@@ -30,14 +30,7 @@ fn parse(input :&str) -> Vec<Vec<bool>> {
 }
 
 fn count_trees(scene :&[Vec<bool>]) -> u16 {
-	let width = scene[0].len();
-	let height = scene.len();
-	let mut trees = 0;
-	for y in 0..height {
-		let x = (y * 3) % width;
-		trees += scene[y][x] as u16;
-	}
-	trees
+	count_trees_for_slope(scene, (3, 1)) as u16
 }
 
 fn count_trees_product(scene :&[Vec<bool>]) -> u64 {
