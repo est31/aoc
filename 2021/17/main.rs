@@ -106,6 +106,5 @@ fn find_target_area(tgt :&TargetArea, starting_vel :[i16; 2]) -> Option<i16> {
 			break;
 		}
 	}
-	// TODO use then_some once it becomes available
-	reached_target.then(|| highest_y)
+	reached_target.then_some(highest_y)
 }
