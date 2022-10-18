@@ -133,53 +133,60 @@ impl Scene {
 	fn is_perfect(&self) -> bool {
 		self.imperfect_amphipods.is_empty()
 	}
+	fn can_move_home(&self, coli :usize, kind :Field, end_col :usize, cost_mul :u32) -> Option<(u32, (usize, usize))> {
+		// Move from the hallway into the end destination (if possible)
+
+		// Whether we can descend in the destination, and if yes,
+		// the descend distance.
+		let land_distance = {
+			let mut descend_dist = None;
+			let can_descend = self.fields.iter()
+				.enumerate()
+				.all(|(i, fl)| {
+					let field = fl[end_col];
+					if descend_dist.is_none() {
+						if field.is_empty() {
+							true
+						} else if field == kind {
+							descend_dist = Some(i as u32 - 1);
+							true
+						} else {
+							false
+						}
+					} else {
+						field == kind
+					}
+				});
+			// TODO simplify this with let chains once available
+			if !can_descend {
+				return None;
+			} else if let Some(dist) = descend_dist {
+				// Check whether nothing is empty. This shouldn't
+				// really occur, as can_descend should have been false.
+				assert!(dist != 0, "Nothing is empty for descent of 0,{coli} at {end_col} in scene:\n{self}");
+				dist
+			} else {
+				// Everything is empty
+				self.fields.len() as u32 - 1
+			}
+		};
+		if self.hallway_is_free(coli, end_col) {
+			let cost = ((end_col as isize) - (coli as isize)).abs() as u32;
+			let cost = cost + land_distance;
+			let end_line = land_distance as usize;
+			Some((cost * cost_mul, (end_line, end_col)))
+		} else {
+			None
+		}
+	}
 	fn moves_for(&self, (linei, coli) :(usize, usize)) -> Vec<(u32, (usize, usize))> {
 		let kind = self.fields[linei][coli];
 		let end_col = kind.end_pos_col().unwrap();
 		let cost_mul = kind.cost_mul().unwrap();
 		match linei {
 			0 => {
-				// Move from the hallway into the end destination (if possible)
-
-				// Whether we can descend in the destination, and if yes,
-				// the descend distance.
-				let land_distance = {
-					let mut descend_dist = None;
-					let can_descend = self.fields.iter()
-						.enumerate()
-						.all(|(i, fl)| {
-							let field = fl[end_col];
-							if descend_dist.is_none() {
-								if field.is_empty() {
-									true
-								} else if field == kind {
-									descend_dist = Some(i as u32 - 1);
-									true
-								} else {
-									false
-								}
-							} else {
-								field == kind
-							}
-						});
-					// TODO simplify this with let chains once available
-					if !can_descend {
-						return Vec::new();
-					} else if let Some(dist) = descend_dist {
-						// Check whether nothing is empty. This shouldn't
-						// really occur, as can_descend should have been false.
-						assert!(dist != 0, "Nothing is empty for descent of {linei},{coli} at {end_col} in scene:\n{self}");
-						dist
-					} else {
-						// Everything is empty
-						self.fields.len() as u32 - 1
-					}
-				};
-				if self.hallway_is_free(coli, end_col) {
-					let cost = ((end_col as isize) - (coli as isize)).abs() as u32;
-					let cost = cost + land_distance;
-					let end_line = land_distance as usize;
-					vec![(cost * cost_mul, (end_line, end_col))]
+				if let Some(cost) = self.can_move_home(coli, kind, end_col, cost_mul) {
+					vec![cost]
 				} else {
 					Vec::new()
 				}
