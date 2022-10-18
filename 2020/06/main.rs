@@ -27,7 +27,7 @@ fn sum_of_everyone_yes(input :&str) -> u32 {
 
 fn group_counts(input :&str) -> impl Iterator<Item=(u32, u32)> + '_ {
 	let mut lines = input.lines();
-	return std::iter::from_fn(move || {
+	std::iter::from_fn(move || {
 		//print!("{group:?}");
 		let mut group = HashMap::<char, u32>::new();
 		let mut group_size = 0;
