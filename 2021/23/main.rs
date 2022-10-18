@@ -19,7 +19,9 @@ fn main() {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 enum Field {
-	Empty(char),
+	Outside,
+	Wall,
+	Empty,
 	Amber,
 	Bronze,
 	Copper,
@@ -29,7 +31,9 @@ enum Field {
 impl Field {
 	fn ch(&self) -> char {
 		match self {
-			Field::Empty(ch) => *ch,
+			Field::Outside => ' ',
+			Field::Wall => '#',
+			Field::Empty => '.',
 			Field::Amber => 'A',
 			Field::Bronze => 'B',
 			Field::Copper => 'C',
@@ -38,7 +42,9 @@ impl Field {
 	}
 	fn from_ch(ch: char) -> Option<Self> {
 		Some(match ch {
-			'.' | '#' | ' ' => Field::Empty(ch),
+			' ' => Field::Outside,
+			'#' => Field::Wall,
+			'.' => Field::Empty,
 			'A' => Field::Amber,
 			'B' => Field::Bronze,
 			'C' => Field::Copper,
@@ -48,7 +54,7 @@ impl Field {
 	}
 	fn end_pos_col(&self) -> Option<usize> {
 		Some(match self {
-			Field::Empty(_) => return None,
+			Field::Outside | Field::Wall | Field::Empty => return None,
 			Field::Amber => 2,
 			Field::Bronze => 4,
 			Field::Copper => 6,
@@ -57,7 +63,7 @@ impl Field {
 	}
 	fn cost_mul(&self) -> Option<u32> {
 		Some(match self {
-			Field::Empty(_) => return None,
+			Field::Outside | Field::Wall | Field::Empty => return None,
 			Field::Amber => 1,
 			Field::Bronze => 10,
 			Field::Copper => 100,
@@ -65,12 +71,12 @@ impl Field {
 		})
 	}
 	fn is_empty(&self) -> bool {
-		matches!(self, Field::Empty(_))
+		matches!(self, Field::Empty)
 	}
 }
 
 fn parse_line(line :&str) -> [Field; 11] {
-	let mut fields = [Field::Empty('.'); 11];
+	let mut fields = [Field::Empty; 11];
 	let mut ch_it = line.chars();
 	ch_it.next();
 	for (ch, field) in ch_it.zip(fields.iter_mut()) {
