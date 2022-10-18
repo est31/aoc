@@ -201,13 +201,15 @@ impl Scene {
 				if !self.fields[linei - 1][coli].is_empty() {
 					return Vec::new();
 				}
-				/*
-				let may_ascend = self.fields[..linei].iter().rev()
-					.all(|fl| fl[coli].is_empty());
-				if !may_ascend {
-					return Vec::new();
+
+				// If we can move home immediately from here,
+				// we know that the direct route is the shortest,
+				// and waiting in the hallway won't bring any improvement
+				// for anybody. So do the movement just right away,
+				// which saves costs.
+				if let Some((cost, dst)) = self.can_move_home(coli, kind, end_col, cost_mul) {
+					return vec![(cost + cost_mul * ascent_cost, dst)];
 				}
-				*/
 
 				// Legal columns in the halway to stop
 				let legal_hallway_cols = [0, 1, 3, 5, 7, 9, 10];
