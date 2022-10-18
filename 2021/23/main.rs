@@ -212,6 +212,7 @@ impl Scene {
 				}
 
 				// Legal columns in the halway to stop
+				// TODO make this search linear
 				let legal_hallway_cols = [0, 1, 3, 5, 7, 9, 10];
 				legal_hallway_cols.into_iter()
 					.filter(|to_col| self.hallway_is_free(coli, *to_col))
@@ -253,6 +254,7 @@ impl Scene {
 		false
 	}
 	fn hallway_blocking_each_other(&self) -> bool {
+		// TODO make this linear
 		for (f_col, f) in self.fields[0].iter().enumerate() {
 			let Some(f_ep) = f.end_pos_col() else {
 				continue;
