@@ -272,7 +272,7 @@ impl std::fmt::Display for Scene {
 }
 
 struct SceneSearch {
-	scenes_encountered :HashSet<Scene>,
+	scenes_encountered :HashSet<Vec<[Field; 11]>>,
 	scenes_with_cost :BTreeMap<u32, HashSet<Scene>>,
 }
 
@@ -286,7 +286,7 @@ impl SceneSearch {
 		ret
 	}
 	fn add_scene_with_cost(&mut self, sc: Scene, cost: u32) {
-		if self.scenes_encountered.contains(&sc) {
+		if self.scenes_encountered.contains(&sc.fields) {
 			return;
 		}
 		let entries = self.scenes_with_cost.entry(cost).or_default();
@@ -294,7 +294,7 @@ impl SceneSearch {
 	}
 	fn step(&mut self) -> Option<u32> {
 		let (cost, scenes_to_develop) = self.scenes_with_cost.pop_first()?;
-		self.scenes_encountered.extend(scenes_to_develop.iter().cloned());
+		self.scenes_encountered.extend(scenes_to_develop.iter().map(|sc| sc.fields.clone()));
 		for sc in scenes_to_develop {
 			if sc.is_perfect() {
 				return Some(cost);
