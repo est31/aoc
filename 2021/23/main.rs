@@ -168,7 +168,7 @@ impl Scene {
 					} else if let Some(dist) = descend_dist {
 						// Check whether nothing is empty. This shouldn't
 						// really occur, as can_descend should have been false.
-						assert!(dist != 0, "Nothing is empty for descent of {linei},{coli} at {end_col} in scene: {self}");
+						assert!(dist != 0, "Nothing is empty for descent of {linei},{coli} at {end_col} in scene:\n{self}");
 						dist
 					} else {
 						// Everything is empty
@@ -243,6 +243,27 @@ impl Scene {
 		}
 		false
 	}
+	fn hallway_blocking_each_other(&self) -> bool {
+		for (f_col, f) in self.fields[0].iter().enumerate() {
+			let Some(f_ep) = f.end_pos_col() else {
+				continue;
+			};
+			if f_ep < f_col {
+				continue;
+			}
+			// Array lookup is safe because end position is always in range
+			for b in self.fields[0][f_col + 1.. f_ep].iter() {
+				// TODO use let chains here
+				if let Some(b_ep) = b.end_pos_col() {
+					if b_ep < f_col {
+						//println!("Found blocking hallway:\n{self}");
+						return true;
+					}
+				}
+			}
+		}
+		false
+	}
 }
 
 impl std::fmt::Display for Scene {
@@ -304,6 +325,9 @@ impl SceneSearch {
 					let mut nsc = sc.clone();
 					nsc.perform_move_for(ipa, mv);
 					let ncost = acost + cost;
+					if nsc.hallway_blocking_each_other() {
+						continue;
+					}
 					//println!("Adding scene with cost {ncost} and move {ipa:?} -> {mv:?}:\n{nsc}");
 					self.add_scene_with_cost(nsc, ncost);
 				}
