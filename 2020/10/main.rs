@@ -32,28 +32,28 @@ fn search(max_connected :u64, to_add :&HashSet<u64>, one_steps :u64, three_steps
 		return Some((one_steps, three_steps));
 	}
 	let c = max_connected;
-	for a in to_add {
-		if ((c + 1)..=(c + 3)).contains(&a) {
-			let (no, nt) = match a - c {
-				1 => (one_steps + 1, three_steps),
-				2 => (one_steps, three_steps),
-				3 => (one_steps, three_steps + 1),
-				_ => panic!(),
-			};
-			let mut to_add_removed = to_add.clone();
-			to_add_removed.remove(a);
-			let res = search(*a, &to_add_removed, no, nt);
-			if res.is_some() {
-				return res;
-			}
+	for a in (c + 1)..=(c + 3) {
+		if !to_add.contains(&a) {
+			continue
+		}
+		let (no, nt) = match a - c {
+			1 => (one_steps + 1, three_steps),
+			2 => (one_steps, three_steps),
+			3 => (one_steps, three_steps + 1),
+			_ => panic!(),
+		};
+		let mut to_add_removed = to_add.clone();
+		to_add_removed.remove(&a);
+		let res = search(a, &to_add_removed, no, nt);
+		if res.is_some() {
+			return res;
 		}
 	}
 	None
 }
 
 fn jolts_diff_count(jolts :&[u64]) -> (u64, u64) {
-	let largest_connected_start = 0; //HashSet::new();
-	//connected.insert(0);
+	let largest_connected_start = 0;
 	let to_add = jolts.iter()
 		.copied()
 		.collect::<HashSet<_>>();
