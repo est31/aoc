@@ -19,7 +19,7 @@ fn test_1() {
 	let numbers = parse(EXAMPLE_INPUT_1);
 	assert_eq!(device_jolts(&numbers), 22);
 	let p = jolts_diff_count(&numbers);
-	assert_eq!(p, (7, 5));
+	assert_eq!(p, (8, 7, 5));
 }
 
 const EXAMPLE_INPUT_2 :&str = "\
@@ -61,5 +61,5 @@ fn test_2() {
 	let numbers = parse(EXAMPLE_INPUT_2);
 	assert_eq!(device_jolts(&numbers), 52);
 	let p = jolts_diff_count(&numbers);
-	assert_eq!(p, (22, 10));
+	assert_eq!(p, (19208, 22, 10));
 }

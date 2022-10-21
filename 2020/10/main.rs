@@ -8,8 +8,9 @@ mod test;
 
 fn main() {
 	let nums = parse(INPUT);
-	let (v0, v1) = jolts_diff_count(&nums);
+	let (tc, v0, v1) = jolts_diff_count(&nums);
 	println!("Product: {}", v0 * v1);
+	println!("Total combinations: {tc}");
 }
 
 fn parse(input :&str) -> Vec<u64> {
@@ -26,12 +27,16 @@ fn device_jolts(jolts :&[u64]) -> u64 {
 	max + 3
 }
 
-fn search(max_connected :u64, to_add :&HashSet<u64>, one_steps :u64, three_steps :u64) -> Option<(u64, u64)> {
+fn search(max_connected :u64, to_add :&HashSet<u64>, one_steps :u64, three_steps :u64) -> (u128, Option<(u64, u64)>) {
 	//println!("Search {}: {connected:?} {to_add:?}", connected.len());
 	if to_add.is_empty() {
-		return Some((one_steps, three_steps));
+		return (1, Some((one_steps, three_steps)));
+	} else if max_connected >= *to_add.iter().max().unwrap() {
+		return (1, None);
 	}
 	let c = max_connected;
+	let mut sum = 0;
+	let mut r = None;
 	for a in (c + 1)..=(c + 3) {
 		if !to_add.contains(&a) {
 			continue
@@ -44,20 +49,19 @@ fn search(max_connected :u64, to_add :&HashSet<u64>, one_steps :u64, three_steps
 		};
 		let mut to_add_removed = to_add.clone();
 		to_add_removed.remove(&a);
-		let res = search(a, &to_add_removed, no, nt);
-		if res.is_some() {
-			return res;
-		}
+		let (s, res) = search(a, &to_add_removed, no, nt);
+		sum += s;
+		r = r.or(res);
 	}
-	None
+	(sum, r)
 }
 
-fn jolts_diff_count(jolts :&[u64]) -> (u64, u64) {
+fn jolts_diff_count(jolts :&[u64]) -> (u128, u64, u64) {
 	let largest_connected_start = 0;
 	let to_add = jolts.iter()
 		.copied()
 		.collect::<HashSet<_>>();
-	let res = search(largest_connected_start, &to_add, 0, 0);
-	let res = res.expect("Couldn't find a setting where all devices are used!");
-	(res.0, res.1 + 1)
+	let (total_combinations, res) = search(largest_connected_start, &to_add, 0, 0);
+	let (one_steps, three_steps) = res.expect("Couldn't find a setting where all devices are used!");
+	(total_combinations, one_steps, three_steps + 1)
 }
