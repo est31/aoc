@@ -18,11 +18,11 @@ fn test_1() {
 	let shiny_gold_id = get_shiny_gold_id(&lines.0).unwrap();
 	let roots = search_roots(shiny_gold_id, &lines.1);
 	assert_eq!(roots, 4);
-	let roots = search_children(shiny_gold_id, &lines.1);
+	let children = search_children(shiny_gold_id, &lines.1);
 	assert_eq!(children, 32);
 }
 
-const EXAMPLE_INPUT :&str = "\
+const EXAMPLE_INPUT_2 :&str = "\
 shiny gold bags contain 2 dark red bags.
 dark red bags contain 2 dark orange bags.
 dark orange bags contain 2 dark yellow bags.
@@ -34,8 +34,8 @@ dark violet bags contain no other bags.
 
 #[test]
 fn test_2() {
-	let lines = parse(EXAMPLE_INPUT);
+	let lines = parse(EXAMPLE_INPUT_2);
 	let shiny_gold_id = get_shiny_gold_id(&lines.0).unwrap();
-	let roots = search_children(shiny_gold_id, &lines.1);
+	let children = search_children(shiny_gold_id, &lines.1);
 	assert_eq!(children, 126);
 }
