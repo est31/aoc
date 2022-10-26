@@ -10,6 +10,9 @@ fn main() {
 	let nums = parse(INPUT);
 	let num = play_game(&nums);
 	println!("Num: {num}");
+	// TODO is there a trick here?
+	let num = play_game_n(&nums, 30_000_000);
+	println!("Num 30M: {num}");
 }
 
 fn parse(input :&str) -> Vec<u32> {
