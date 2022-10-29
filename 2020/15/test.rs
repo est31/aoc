@@ -13,6 +13,7 @@ fn test_1() {
 
 	assert_eq!(play_game(&parse("0,3,6")), 436);
 }
+
 #[test]
 fn test_2() {
 	assert_eq!(play_game(&parse("1,3,2")), 1);
