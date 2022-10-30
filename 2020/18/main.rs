@@ -8,11 +8,18 @@ mod test;
 fn main() {
 	let sum = eval_lines(INPUT);
 	println!("Sum: {sum}");
+	let sum = eval_lines_2(INPUT);
+	println!("Sum v2: {sum}");
 }
 
 fn eval_lines(input :&str) -> u64 {
 	input.lines()
-		.map(eval_line)
+		.map(|l| {
+			let tokens = tokenize(l);
+			//println!("{tokens:?}");
+			let mut pos = 0;
+			eval_tokens(&mut pos, &tokens)
+		})
 		.sum()
 }
 
@@ -101,9 +108,52 @@ fn eval_tokens(pos :&mut usize, toks :&[Token<'_>]) -> u64 {
 	acc.unwrap()
 }
 
-fn eval_line(l :&str) -> u64 {
-	let tokens = tokenize(l);
-	//println!("{tokens:?}");
-	let mut pos = 0;
-	eval_tokens(&mut pos, &tokens)
+fn eval_tokens_2(pos :&mut usize, toks :&[Token<'_>], stop_at_mul :bool, dont_eat_close :bool) -> u64 {
+	//println!("  {pos}");
+
+	let mut acc = None;
+	while let Some(tok) = toks.get(*pos) {
+		*pos += 1;
+		//println!("    {pos} {acc:?}");
+		let v = match tok {
+			Token::Mul => {
+				if stop_at_mul {
+					*pos -= 1;
+					break;
+				}
+				let w = eval_tokens_2(pos, toks, false, true);
+				acc = Some(acc.unwrap() * w);
+				continue;
+			},
+			Token::Plus => {
+				let w = eval_tokens_2(pos, toks, true, true);
+				acc = Some(acc.unwrap() + w);
+				continue;
+			},
+			Token::OpenBr => eval_tokens_2(pos, toks, false, false),
+			Token::CloseBr => {
+				if dont_eat_close {
+					*pos -= 1;
+				}
+				break;
+			},
+			Token::Lit(v) => *v,
+			Token::Unparsed(s) => panic!("Unexpected unparsed token '{s}'"),
+		};
+		assert_eq!(acc, None);
+		acc = Some(v);
+	}
+	//println!("  -> {}", acc.unwrap());
+	acc.unwrap()
+}
+
+fn eval_lines_2(input :&str) -> u64 {
+	input.lines()
+		.map(|l| {
+			let tokens = tokenize(l);
+			//println!("{tokens:?}");
+			let mut pos = 0;
+			eval_tokens_2(&mut pos, &tokens, false, false)
+		})
+		.sum()
 }
