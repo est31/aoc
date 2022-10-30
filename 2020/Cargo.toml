@@ -72,3 +72,7 @@ path = "16/main.rs"
 [[bin]]
 name = "2020-17"
 path = "17/main.rs"
+
+[[bin]]
+name = "2020-18"
+path = "18/main.rs"
