@@ -7,9 +7,12 @@ const INPUT :&str = include_str!("input");
 mod test;
 
 fn main() {
-	let rules_msgs = parse_rules_msgs(INPUT);
+	let mut rules_msgs = parse_rules_msgs(INPUT);
 	let valid = find_valid_count(&rules_msgs.0, &rules_msgs.1);
 	println!("Valid msgs: {valid}");
+	transform_rules(&mut rules_msgs.0);
+	let valid = find_valid_count(&rules_msgs.0, &rules_msgs.1);
+	println!("Valid msgs after transformation: {valid}");
 }
 
 enum Rule {
@@ -93,7 +96,7 @@ fn find_valid_offsets(rule_idx :u16, rules :&HashMap<u16, Rule>, msg :&[u8]) -> 
 			find_valid_and_offsets(list, rules, msg)
 		},
 		Rule::Terminal(ch) => {
-			if msg[0] == *ch {
+			if msg.get(0) == Some(ch) {
 				[1].into_iter().collect()
 			} else {
 				HashSet::new()
@@ -104,12 +107,10 @@ fn find_valid_offsets(rule_idx :u16, rules :&HashMap<u16, Rule>, msg :&[u8]) -> 
 
 fn is_valid(rules :&HashMap<u16, Rule>, msg :&str) -> bool {
 	let msg = msg.as_bytes();
-	let offsts = find_valid_offsets(0, rules, msg)
-		.into_iter()
-		.collect::<Vec<_>>();
-	let expected = &[msg.len()];
-	let ret = &offsts == expected;
-	//println!("{offsts:?} vs {expected:?} => {ret}");
+	let offsts = find_valid_offsets(0, rules, msg);
+	let expected = msg.len();
+	let ret = offsts.contains(&expected);
+	//println!("{offsts:?} vs {expected} => {ret}");
 	ret
 }
 
@@ -117,4 +118,9 @@ fn find_valid_count(rules :&HashMap<u16, Rule>, msgs :&[String]) -> usize {
 	msgs.iter()
 		.filter(|m| is_valid(rules, m))
 		.count()
+}
+
+fn transform_rules(rules :&mut HashMap<u16, Rule>) {
+	rules.insert(8, Rule::Or(vec![42], vec![42, 8]));
+	rules.insert(11, Rule::Or(vec![42, 31], vec![42, 11, 31]));
 }
