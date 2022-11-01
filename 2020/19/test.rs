@@ -97,23 +97,19 @@ aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba
 #[test]
 fn test_3() {
 	let (mut rules, msgs) = parse_rules_msgs(EXAMPLE_INPUT_3);
-	/*assert!(is_valid(&rules, "bbabbbbaabaabba"));
+	assert!(is_valid(&rules, "bbabbbbaabaabba"));
 	assert!(is_valid(&rules, "ababaaaaaabaaab"));
 	assert!(is_valid(&rules, "ababaaaaabbbaba"));
-	assert_eq!(find_valid_count(&rules, &msgs), 3);*/
+	assert_eq!(find_valid_count(&rules, &msgs), 3);
 
 	transform_rules(&mut rules);
-	//assert!(is_valid(&rules, "bbabbbbaabaabba"));
+	assert!(is_valid(&rules, "bbabbbbaabaabba"));
 	assert!(is_valid(&rules, "babbbbaabbbbbabbbbbbaabaaabaaa"));
 	assert!(is_valid(&rules, "aaabbbbbbaaaabaababaabababbabaaabbababababaaa"));
 	assert!(is_valid(&rules, "bbbbbbbaaaabbbbaaabbabaaa"));
 	assert!(is_valid(&rules, "bbbababbbbaaaaaaaabbababaaababaabab"));
 	assert!(is_valid(&rules, "ababaaaaaabaaab"));
 	assert!(is_valid(&rules, "ababaaaaabbbaba"));
-	//assert!(is_valid(&rules, ""));
-	//assert!(is_valid(&rules, ""));
-	//assert!(is_valid(&rules, ""));
-	//assert!(is_valid(&rules, ""));
-	//assert!(is_valid(&rules, ""));
+	// ...
 	assert_eq!(find_valid_count(&rules, &msgs), 12);
 }
