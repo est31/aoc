@@ -80,3 +80,7 @@ path = "18/main.rs"
 [[bin]]
 name = "2020-19"
 path = "19/main.rs"
+
+[[bin]]
+name = "2020-20"
+path = "20/main.rs"
