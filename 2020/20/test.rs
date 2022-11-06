@@ -113,5 +113,13 @@ Tile 3079:
 #[test]
 fn test_1() {
 	let tiles = parse(EXAMPLE_INPUT_1);
-	assert_eq!(edge_product(&tiles), 20899048083289);
+	assert_eq!(corner_product(&tiles), 20899048083289);
+}
+
+#[test]
+fn test_2() {
+	let tiles = parse(EXAMPLE_INPUT_1);
+	let reconstructed = reconstruct_image(&tiles);
+	let tr_nt_mn = count_true_not_sea_monster(&reconstructed);
+	assert_eq!(tr_nt_mn, 273);
 }
