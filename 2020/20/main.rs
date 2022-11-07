@@ -92,12 +92,6 @@ fn mirror_y(tile :&mut [Vec<bool>]) {
 	tile.reverse();
 }
 
-fn mirror_x(tile :&mut [Vec<bool>]) {
-	for line in tile.iter_mut() {
-		line.reverse();
-	}
-}
-
 fn rotate_90(tile :&mut [Vec<bool>]) {
 	let mut rotated = Vec::new();
 	for y in 0 .. tile.len() {
@@ -136,12 +130,6 @@ fn rotate_until(tile :&[Vec<bool>], check :impl Fn(&[Vec<bool>]) -> bool) -> Vec
 			return tile;
 		}
 		mirror_y(&mut tile);
-
-		mirror_x(&mut tile);
-		if check(&tile) {
-			return tile;
-		}
-		mirror_x(&mut tile);
 
 		rotate_90(&mut tile);
 	}
@@ -314,10 +302,6 @@ fn count_true_not_sea_monster(tiles :&[Vec<bool>]) -> u32 {
 		mirror_y(&mut tiles);
 		disappear_monsters(&mut tiles);
 		mirror_y(&mut tiles);
-
-		mirror_x(&mut tiles);
-		disappear_monsters(&mut tiles);
-		mirror_x(&mut tiles);
 
 		rotate_90(&mut tiles);
 	}
