@@ -98,6 +98,20 @@ fn mirror_x(tile :&mut [Vec<bool>]) {
 	}
 }
 
+fn rotate_90(tile :&mut [Vec<bool>]) {
+	let mut rotated = Vec::new();
+	for y in 0 .. tile.len() {
+		let line = tile.iter()
+			.rev()
+			.map(|tl| tl[y])
+			.collect::<Vec<_>>();
+		rotated.push(line);
+	}
+	for (line, rt) in tile.iter_mut().zip(rotated.into_iter()) {
+		*line = rt;
+	}
+}
+
 fn is_top_left_like(tile :&[Vec<bool>], tl :&[bool], is_top :bool) -> bool {
 	if is_top {
 		assert_eq!(tile[0].len(), tl.len());
@@ -112,21 +126,24 @@ fn is_top_left_like(tile :&[Vec<bool>], tl :&[bool], is_top :bool) -> bool {
 
 fn rotate_until(tile :&[Vec<bool>], check :impl Fn(&[Vec<bool>]) -> bool) -> Vec<Vec<bool>> {
 	let mut tile = tile.to_vec();
-	if check(&tile) {
-		return tile;
-	}
-	let mut tcl = tile.clone();
-	mirror_x(&mut tcl);
-	if check(&tcl) {
-		return tcl;
-	}
-	mirror_y(&mut tcl);
-	if check(&tcl) {
-		return tcl;
-	}
-	mirror_y(&mut tile);
-	if check(&tile) {
-		return tile;
+	for _ in 0..4 {
+		if check(&tile) {
+			return tile;
+		}
+
+		mirror_y(&mut tile);
+		if check(&tile) {
+			return tile;
+		}
+		mirror_y(&mut tile);
+
+		mirror_x(&mut tile);
+		if check(&tile) {
+			return tile;
+		}
+		mirror_x(&mut tile);
+
+		rotate_90(&mut tile);
 	}
 	panic!("No rotation/mirroring found!");
 }
@@ -148,7 +165,7 @@ fn reconstruct_image(tiles :&[Tile]) -> Vec<Vec<bool>> {
 	let (hm, corners) = hm_corners(tiles);
 	let smallest_corner_id = corners.iter().min().unwrap();
 
-	println!("Adding tile {smallest_corner_id} as start corner tile");
+	//println!("Adding tile {smallest_corner_id} as start corner tile");
 
 	let top_left_tile = tiles.iter()
 		.find(|(id, _)| id == smallest_corner_id)
@@ -201,7 +218,7 @@ fn reconstruct_image(tiles :&[Tile]) -> Vec<Vec<bool>> {
 
 		let tile_id = tile_id[0];
 		added.insert(tile_id);
-		println!("Adding tile {tile_id} with is_top={is_top}");
+		//println!("Adding tile {tile_id} with is_top={is_top}");
 
 		let tile = tiles.iter()
 			.find(|(id, _)| id == tile_id)
@@ -234,6 +251,7 @@ fn reconstruct_image(tiles :&[Tile]) -> Vec<Vec<bool>> {
 
 		if is_top {
 			if hm.get(&new_l1).unwrap().len() == 1 {
+				// We are done!
 				assert_eq!(added.len(), tiles.len());
 				break;
 			}
@@ -242,10 +260,11 @@ fn reconstruct_image(tiles :&[Tile]) -> Vec<Vec<bool>> {
 		}
 	}
 
+	assert_eq!(res.len() * res[0].len(), tiles.len() * 8 * 8);
 	res
 }
 
-const SEA_MONSTER :&str = "\
+const SEA_MONSTER :&str = "
                   #
 #    ##    ##    ###
  #  #  #  #  #  #
@@ -253,6 +272,7 @@ const SEA_MONSTER :&str = "\
 
 fn sea_monster_positions() -> Vec<(usize, usize)> {
 	SEA_MONSTER.lines()
+		.skip(1)
 		.enumerate()
 		.map(|(y, l)| {
 			l.chars()
@@ -276,7 +296,7 @@ fn disappear_monsters(tiles :&mut [Vec<bool>]) {
 				});
 			if matches {
 				// Found one! :)
-				println!("Found a monster :)");
+				//println!("Found a monster :)");
 				for (x, y) in mps.iter() {
 					tiles[y + yo][x + xo] = false;
 				}
@@ -288,16 +308,19 @@ fn disappear_monsters(tiles :&mut [Vec<bool>]) {
 fn count_true_not_sea_monster(tiles :&[Vec<bool>]) -> u32 {
 	let mut tiles = tiles.to_vec();
 
-	disappear_monsters(&mut tiles);
+	for _ in 0..4 {
+		disappear_monsters(&mut tiles);
 
-	mirror_x(&mut tiles);
-	disappear_monsters(&mut tiles);
+		mirror_y(&mut tiles);
+		disappear_monsters(&mut tiles);
+		mirror_y(&mut tiles);
 
-	mirror_y(&mut tiles);
-	disappear_monsters(&mut tiles);
+		mirror_x(&mut tiles);
+		disappear_monsters(&mut tiles);
+		mirror_x(&mut tiles);
 
-	mirror_x(&mut tiles);
-	disappear_monsters(&mut tiles);
+		rotate_90(&mut tiles);
+	}
 
 	let true_count = tiles.iter()
 		.map(|l| l.iter())

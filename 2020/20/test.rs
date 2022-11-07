@@ -116,10 +116,109 @@ fn test_1() {
 	assert_eq!(corner_product(&tiles), 20899048083289);
 }
 
+const RECONSTRUCTED_GOAL :&str = "\
+.#.#..#.##...#.##..#####
+###....#.#....#..#......
+##.##.###.#.#..######...
+###.#####...#.#####.#..#
+##.#....#.##.####...#.##
+...########.#....#####.#
+....#..#...##..#.#.###..
+.####...#..#.....#......
+#..#.##..#..###.#.##....
+#.####..#.####.#.#.###..
+###.#.#...#.######.#..##
+#.####....##..########.#
+##..##.#...#...#.#.#.#..
+...#..#..#.#.##..###.###
+.#.#....#.##.#...###.##.
+###.#...#..#.##.######..
+.#.#.###.##.##.#..#.##..
+.####.###.#...###.#..#.#
+..#.#..#..#.#.#.####.###
+#..####...#.#.#.###.###.
+#####..#####...###....##
+#.##..#..#...#..####...#
+.#.###..##..##..####.##.
+...###...##...#...#..###
+";
+
 #[test]
 fn test_2() {
 	let tiles = parse(EXAMPLE_INPUT_1);
 	let reconstructed = reconstruct_image(&tiles);
+	rotate_until(&reconstructed, |tl| {
+		let st = tiles_to_string(&tl);
+		/*let eq_lines = st.lines()
+			.zip(RECONSTRUCTED_GOAL.lines())
+			.filter(|(l1, l2)| l1 == l2)
+			.count();
+		println!("One possible rotation {eq_lines}:\n{st}");*/
+		st.trim() == RECONSTRUCTED_GOAL.trim()
+	});
 	let tr_nt_mn = count_true_not_sea_monster(&reconstructed);
 	assert_eq!(tr_nt_mn, 273);
+}
+
+const ROTATED :&str = "\
+.####...#####..#...###..
+#####..#..#.#.####..#.#.
+.#.#...#.###...#.##.##..
+#.#.##.###.#.##.##.#####
+..##.###.####..#.####.##
+...#.#..##.##...#..#..##
+#.##.#..#.#..#..##.#.#..
+.###.##.....#...###.#...
+#.####.#.#....##.#..#.#.
+##...#..#....#..#...####
+..#.##...###..#.#####..#
+....#.##.#.#####....#...
+..##.##.###.....#.##..#.
+#...#...###..####....##.
+.#.##...#.##.#.#.###...#
+#.###.#..####...##..#...
+#.###...#.##...#.######.
+.###.###.#######..#####.
+..##.#..#..#.#######.###
+#.#..##.########..#..##.
+#.#####..#.#...##..#....
+#....##..#.#########..##
+#...#.....#..##...###.##
+#..###....##.#...##.##.#
+";
+
+fn parse_field(input :&str) -> Vec<Vec<bool>> {
+	let mut res = Vec::new();
+	for line in input.lines() {
+		let tl = line.chars()
+			.map(|c| match c {
+				'#' => true,
+				'.' => false,
+				_ => panic!(),
+			})
+			.collect::<Vec<_>>();
+		res.push(tl);
+	}
+	res
+}
+
+#[test]
+fn test_count_dragons() {
+	let mps = sea_monster_positions();
+	assert_eq!(mps.len(), 15);
+	println!("{mps:?}");
+	let goal = parse_field(&ROTATED);
+	let tr_nt_mn = count_true_not_sea_monster(&goal);
+	assert_eq!(tr_nt_mn, 273);
+}
+
+fn tiles_to_string(tiles :&[Vec<bool>]) -> String {
+	tiles.iter()
+		.map(|l| {
+			let st = l.iter()
+				.map(|b| if *b { '#' } else { '.' })
+				.collect::<String>();
+			st + "\n"
+		})
+		.collect::<String>()
 }
