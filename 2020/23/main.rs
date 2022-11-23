@@ -9,20 +9,20 @@ fn main() {
 	println!("Labels after 100 moves: {labels}");
 }
 
-fn parse(input :&str) -> Vec<u8> {
+fn parse(input :&str) -> Vec<u32> {
 	input.trim()
 		.chars()
-		.map(|c| c as u8 - b'0')
+		.map(|c| (c as u8 - b'0').into())
 		.collect::<Vec<_>>()
 }
 
 struct Cups {
 	current :usize,
-	cups :Vec<u8>,
+	cups :Vec<u32>,
 }
 
 impl Cups {
-	fn new(cups :Vec<u8>) -> Self {
+	fn new(cups :Vec<u32>) -> Self {
 		Self {
 			current : 0,
 			cups,
@@ -94,7 +94,7 @@ impl Cups {
 	}
 }
 
-fn get_labels_after_n(nums :&[u8], n: u16) -> String {
+fn get_labels_after_n(nums :&[u32], n: u16) -> String {
 	let mut cups = Cups::new(nums.to_vec());
 	for _ in 0..n {
 		cups.do_move();
@@ -102,6 +102,6 @@ fn get_labels_after_n(nums :&[u8], n: u16) -> String {
 	cups.get_labels()
 }
 
-fn get_labels_after_100(nums :&[u8]) -> String {
+fn get_labels_after_100(nums :&[u32]) -> String {
 	get_labels_after_n(nums, 100)
 }
