@@ -37,6 +37,33 @@ impl Cups {
 		}
 		self.biggest_cup_num = 1_000_000 - 1;
 	}
+	fn move_from_to(&mut self, source :usize, dest :usize) {
+		// let cup = self.cups.remove(source);
+		// self.cups.insert(dest, cup);
+		if source == dest {
+			// Nothing to do! :)
+			return;
+		}
+		if source < dest {
+			if (dest - source) * 2 > self.cups.len() {
+				let cup = self.cups.remove(source);
+				self.cups.insert(dest, cup);
+			} else {
+				for i in source..dest {
+					self.cups.swap(i, i + 1);
+				}
+			}
+		} else {
+			if (source - dest) * 2 > self.cups.len() {
+				let cup = self.cups.remove(source);
+				self.cups.insert(dest, cup);
+			} else {
+				for i in (dest..source).rev() {
+					self.cups.swap(i, i + 1);
+				}
+			}
+		}
+	}
 	fn do_move(&mut self) {
 		let len = self.cups.len();
 		//println!("--move--");
@@ -65,24 +92,25 @@ impl Cups {
 			}
 			tgt -= 1;
 		}
-		let mut dest_idx = dest_idx.unwrap();
-		// Adjust for removal of cups
+		let dest_idx = dest_idx.unwrap();
+
+		//println!("pick up: {} {} {}", self.cups[current + 1], self.cups[current + 2], self.cups[current + 3]);
+		//println!("destination: {}", self.cups[dest_idx]);
+
+		// Adjust for removal of cups,
+		// and put the cups next to the destination cup
 		let new_current = if dest_idx > current {
-			dest_idx -= 3;
+			self.move_from_to(current + 1, dest_idx);
+			self.move_from_to(current + 1, dest_idx);
+			self.move_from_to(current + 1, dest_idx);
 			current + 1
 		} else {
+			self.move_from_to(current + 1, dest_idx + 1);
+			self.move_from_to(current + 2, dest_idx + 2);
+			self.move_from_to(current + 3, dest_idx + 3);
 			current + 4
 		};
 		let new_current = new_current % self.cups.len();
-		// Now we put the cups next to the destination cup
-		let c1 = self.cups.remove(current + 1);
-		let c2 = self.cups.remove(current + 1);
-		let c3 = self.cups.remove(current + 1);
-		//println!("pick up: {c1} {c2} {c3}");
-		//println!("destination: {}", self.cups[dest_idx]);
-		self.cups.insert(dest_idx + 1, c1);
-		self.cups.insert(dest_idx + 2, c2);
-		self.cups.insert(dest_idx + 3, c3);
 
 		self.current = new_current;
 		assert_eq!(len, self.cups.len());
