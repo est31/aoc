@@ -35,16 +35,29 @@ impl Cups {
 			cups[win[1] as usize] = (win[0], win[2]);
 		}
 		if million {
-			for c in icups.len()..1_000_000 {
+			assert_eq!(biggest_cup_num as usize, icups.len());
+			for c in (icups.len() + 1)..=1_000_000 {
+				assert_eq!(cups.len(), c);
 				cups.push((c as u32 - 1, c as u32 + 1));
 			}
-			cups[icups.len()].0 = *icups.last().unwrap();
+			assert_eq!(cups.len(), 1_000_001);
+
+			cups[icups.len() + 1].0 = *icups.last().unwrap();
 			cups.last_mut().unwrap().1 = icups[0];
 
 			cups[icups[0] as usize] = (cups.len() as u32 - 1, icups[1]);
-			cups[*icups.last().unwrap() as usize] = (icups[icups.len() - 2], icups.len() as u32);
+			cups[*icups.last().unwrap() as usize] = (icups[icups.len() - 2], icups.len() as u32 + 1);
 
-			biggest_cup_num = 1_000_000 - 1;
+			let mut cur = cups[1].1;
+			let mut ctr = 1;
+			while cur != 1 {
+				//println!("cur is {cur}");
+				biggest_cup_num  = biggest_cup_num.max(cur);
+				cur = cups[cur as usize].1;
+				ctr += 1;
+			}
+			assert_eq!(ctr, 1_000_000);
+			assert_eq!(biggest_cup_num, 1_000_000);
 		} else {
 			cups[icups[0] as usize] = (*icups.last().unwrap(), icups[1]);
 			cups[*icups.last().unwrap() as usize] = (icups[icups.len() - 2], icups[0]);
@@ -69,8 +82,7 @@ impl Cups {
 
 		// Find destination cup.
 		let mut tgt = current - 1;
-		let mut dest = None;
-		while dest.is_none() {
+		let dest = loop {
 			if tgt == 0 {
 				tgt = self.biggest_cup_num;
 			}
@@ -81,15 +93,12 @@ impl Cups {
 				tgt -= 1;
 				continue;
 			}
-			dest = Some(tgt);
-
-			tgt -= 1;
-		}
-		let dest = dest.unwrap();
+			break tgt;
+		};
 		let dest_succ = self.cups[dest as usize].1;
 
 		//println!("pick up: {} {} {}", c1, c2, c3);
-		//println!("destination: {}", self.cups[dest_idx]);
+		//println!("destination: {}", dest);
 
 		// Do the move.
 
