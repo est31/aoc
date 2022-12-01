@@ -9,3 +9,7 @@ version = "0.1.0"
 [[package]]
 name = "year-2021"
 version = "0.1.0"
+
+[[package]]
+name = "year-2022"
+version = "0.1.0"
