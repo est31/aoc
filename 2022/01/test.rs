@@ -22,4 +22,6 @@ fn test_1() {
 	let groups = parse(EXAMPLE_INPUT);
 	let mgs = max_group_sum(&groups);
 	assert_eq!(mgs, 24000);
+	let m3gs = max_three_groups_sum(&groups);
+	assert_eq!(m3gs, 45000);
 }

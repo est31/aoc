@@ -9,6 +9,8 @@ fn main() {
 	let groups = parse(INPUT);
 	let mgs = max_group_sum(&groups);
 	println!("max group sum: {mgs}");
+	let m3gs = max_three_groups_sum(&groups);
+	println!("max three groups sum: {m3gs}");
 }
 
 fn parse(input :&str) -> Vec<Vec<u32>> {
@@ -33,4 +35,14 @@ fn max_group_sum(groups :&[Vec<u32>]) -> u32 {
 		.map(|g| g.iter().sum())
 		.max()
 		.unwrap()
+}
+
+fn max_three_groups_sum(groups :&[Vec<u32>]) -> u32 {
+	let mut group_sums = groups.iter()
+		.map(|g| g.iter().sum())
+		.collect::<Vec<u32>>();
+	group_sums.sort();
+	let l = group_sums.len();
+	let sum = group_sums[l - 1] + group_sums[l - 2] + group_sums[l - 3];
+	sum
 }
