@@ -26,3 +26,10 @@ fn test_1() {
 	let prios = priorities_of_dupes(&lines);
 	assert_eq!(prios, 157);
 }
+
+#[test]
+fn test_2() {
+	let lines = parse(EXAMPLE_INPUT);
+	let g_prios = group_priorities(&lines);
+	assert_eq!(g_prios, 70);
+}
