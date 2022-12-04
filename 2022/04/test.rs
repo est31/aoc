@@ -14,4 +14,6 @@ fn test_1() {
 	let lines = parse(EXAMPLE_INPUT);
 	let cont = contained_pairs(&lines);
 	assert_eq!(cont, 2);
+	let ovlp = overlap_pairs(&lines);
+	assert_eq!(ovlp, 4);
 }

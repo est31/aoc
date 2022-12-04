@@ -9,6 +9,8 @@ fn main() {
 	let lines = parse(INPUT);
 	let cont = contained_pairs(&lines);
 	println!("contained pairs: {cont}");
+	let ovlp = overlap_pairs(&lines);
+	println!("overlapping pairs: {ovlp}");
 }
 
 fn parse(input :&str) -> Vec<[[u16; 2]; 2]> {
@@ -31,11 +33,24 @@ fn first_contains_second(a1 :&[u16; 2], a2 :&[u16; 2]) -> bool {
 	(a1[0] <= a2[0]) && (a1[1] >= a2[1])
 }
 
+fn containing(a1 :&[u16; 2], a2 :&[u16; 2]) -> bool {
+	first_contains_second(a1, a2) || first_contains_second(a2, a1)
+}
+
 fn contained_pairs(lines :&[[[u16; 2]; 2]]) -> usize {
 	lines.iter()
+		.filter(|[a1, a2]| containing(a1, a2))
+		.count()
+}
+
+fn overlap_pairs(lines :&[[[u16; 2]; 2]]) -> usize {
+	lines.iter()
 		.filter(|[a1, a2]| {
-			first_contains_second(a1, a2) ||
-			first_contains_second(a2, a1)
+			if containing(a1, a2) {
+				return true;
+			}
+			let a1r = a1[0]..=a1[1];
+			a1r.contains(&a2[0]) || a1r.contains(&a2[1])
 		})
 		.count()
 }
