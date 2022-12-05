@@ -9,6 +9,8 @@ fn main() {
 	let (stacks, cmds) = parse(INPUT);
 	let top = exec_and_top(&stacks, &cmds);
 	println!("top stacks: {top}");
+	let top_9001 = exec_and_top_9001(&stacks, &cmds);
+	println!("top stacks 9001: {top_9001}");
 }
 
 fn parse(input :&str) -> (Vec<Vec<char>>, Vec<(u16, u16, u16)>) {
@@ -74,6 +76,21 @@ fn exec_and_top(stacks :&[Vec<char>], cmds: &[(u16, u16, u16)]) -> String {
 	for &(n, from, to) in cmds {
 		for _ in 0..n {
 			let ch = stacks[from as usize - 1].pop().unwrap();
+			stacks[to as usize - 1].push(ch);
+		}
+	}
+	stacks.iter()
+		.map(|st| st.last().unwrap())
+		.collect::<_>()
+}
+
+fn exec_and_top_9001(stacks :&[Vec<char>], cmds: &[(u16, u16, u16)]) -> String {
+	let mut stacks = stacks.to_vec();
+	for &(n, from, to) in cmds {
+		let from_idx = stacks[from as usize - 1].len() - n as usize;
+		//println!("n={n}, f={from}, t={to}");
+		for _ in 0..n {
+			let ch = stacks[from as usize - 1].remove(from_idx);
 			stacks[to as usize - 1].push(ch);
 		}
 	}

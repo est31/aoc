@@ -22,4 +22,6 @@ fn test_1() {
 	assert_eq!(stacks[2][..], ['P']);
 	let top = exec_and_top(&stacks, &cmds);
 	assert_eq!(top, "CMZ");
+	let top_9001 = exec_and_top_9001(&stacks, &cmds);
+	assert_eq!(top_9001, "MCD");
 }
