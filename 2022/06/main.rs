@@ -4,11 +4,13 @@ const INPUT :&str = include_str!("input");
 mod test;
 
 fn main() {
-	let end = start_of_packed_end(INPUT);
+	let end = start_of_packet_end(INPUT);
 	println!("start of packet end: {end}");
+	let msg_end = start_of_msg_end(INPUT);
+	println!("start of msg end: {msg_end}");
 }
 
-fn is_start_of_pck(win :&[u8]) -> bool {
+fn is_start(win :&[u8]) -> bool {
 	for (i, wi) in win.iter().enumerate() {
 		if i == win.len() - 1 {
 			return true;
@@ -20,13 +22,21 @@ fn is_start_of_pck(win :&[u8]) -> bool {
 	unreachable!();
 }
 
-fn start_of_packed_end(input :&str) -> usize {
+fn start_of_packet_end(input :&str) -> usize {
+	start_of_end_siz(input, 4)
+}
+
+fn start_of_msg_end(input :&str) -> usize {
+	start_of_end_siz(input, 14)
+}
+
+fn start_of_end_siz(input :&str, siz :usize) -> usize {
 	let mut offs = 0;
-	for win in input.trim().as_bytes().windows(4) {
-		if is_start_of_pck(win) {
+	for win in input.trim().as_bytes().windows(siz) {
+		if is_start(win) {
 			break;
 		}
 		offs += 1;
 	}
-	return offs + 4
+	return offs + siz
 }
