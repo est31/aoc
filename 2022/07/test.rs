@@ -30,5 +30,11 @@ $ ls
 #[test]
 fn test_1() {
 	let dh = parse(EXAMPLE_INPUT);
-	assert_eq!(dir_and_small_dir_size(&dh), (48381165, 95437));
+	assert_eq!(dir_and_small_dir_size(&dh, &mut |_| ()), (48381165, 95437));
+}
+
+#[test]
+fn test_2() {
+	let dh = parse(EXAMPLE_INPUT);
+	assert_eq!(smallest_that_frees(&dh), 24933642);
 }

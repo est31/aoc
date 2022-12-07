@@ -10,6 +10,8 @@ fn main() {
 	let dh = parse(INPUT);
 	let sum = sum_of_small_dirs(&dh);
 	println!("sum of small dirs: {sum}");
+	let siz = smallest_that_frees(&dh);
+	println!("smallest that frees enough: {siz}");
 }
 
 type DirHierarchy = HashMap<String, DirEntry>;
@@ -79,16 +81,25 @@ fn parse(input :&str) -> DirHierarchy {
 }
 
 fn sum_of_small_dirs(dh :&DirHierarchy) -> u64 {
-	dir_and_small_dir_size(dh).1
+	dir_and_small_dir_size(dh, &mut |_| ()).1
 }
 
-fn dir_and_small_dir_size(dh :&DirHierarchy) -> (u64, u64) {
+fn smallest_that_frees(dh :&DirHierarchy) -> u64 {
+	let mut sizes = Vec::new();
+	let dir_size = dir_and_small_dir_size(dh, &mut |siz| sizes.push(siz)).0;
+	sizes.into_iter()
+		.filter(|siz| dir_size - *siz < (70_000_000 - 30_000_000))
+		.min()
+		.unwrap()
+}
+
+fn dir_and_small_dir_size(dh :&DirHierarchy, f :&mut impl FnMut(u64)) -> (u64, u64) {
 	let mut dir_size = 0;
 	let mut small_dir_size = 0;
 	for (_name, entry) in dh.iter() {
 		match entry {
 			DirEntry::Dir(entries) => {
-				let (siz, small_siz) = dir_and_small_dir_size(&entries);
+				let (siz, small_siz) = dir_and_small_dir_size(&entries, f);
 				//println!("  for '{_name}': siz={siz} sm={small_siz}");
 				dir_size += siz;
 				small_dir_size += small_siz;
@@ -100,6 +111,7 @@ fn dir_and_small_dir_size(dh :&DirHierarchy) -> (u64, u64) {
 	if dir_size <= 100_000 {
 		small_dir_size += dir_size;
 	}
+	f(dir_size);
 	//println!("ret: siz={dir_size} sm={small_dir_size}");
 	(dir_size, small_dir_size)
 }
