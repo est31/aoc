@@ -10,6 +10,8 @@ fn main() {
 	let grid = parse(INPUT);
 	let ov = outside_visible(&grid);
 	println!("outside visible: {}", ov);
+	let scm = scenic_score_maximum(&grid);
+	println!("max scenic score: {}", scm);
 }
 
 fn parse(input :&str) -> Vec<Vec<u8>> {
@@ -78,4 +80,69 @@ fn outside_visible(grid :&[Vec<u8>]) -> usize {
 		.collect::<HashSet<_>>();
 	//println!("{visibles:?}");
 	visibles.len()
+}
+
+fn viewing_dist_asc(it :impl Iterator<Item = u8> + Clone) -> Vec<usize> {
+	let mut max_st = Vec::new();
+	let mut res = Vec::new();
+	for (i, v) in it.enumerate() {
+		while let Some((mi, mv)) = max_st.pop() {
+			if mv >= v {
+				max_st.push((mi, mv));
+				break;
+			}
+		}
+		let mut do_pop = false;
+		let dist = if let Some((mi, mv)) = max_st.last() {
+			if *mv == v {
+				do_pop = true;
+			}
+			i - mi
+		} else {
+			i
+		};
+		if do_pop {
+			max_st.pop();
+		}
+		max_st.push((i, v));
+		res.push(dist);
+	}
+	res
+}
+
+fn viewing_distances(it :impl Iterator<Item = u8> + Clone + DoubleEndedIterator) -> Vec<(usize, usize)> {
+	let (len, max_estim) = it.size_hint();
+	assert_eq!(max_estim, Some(len));
+	let asc = viewing_dist_asc(it.clone());
+	let mut desc = viewing_dist_asc(it.rev());
+	desc.reverse();
+	asc.into_iter()
+		.zip(desc.into_iter())
+		.collect::<Vec<_>>()
+}
+
+fn scenic_score_maximum(grid :&[Vec<u8>]) -> u64 {
+	let scores_horiz = grid.iter()
+		.map(|l| viewing_distances(l.iter().copied()))
+		.collect::<Vec<_>>();
+	let col_num = grid[0].len();
+	let scores_vert = (0..col_num)
+		.map(|i| {
+			let it = grid.iter().map(|l| l[i]);
+			viewing_distances(it)
+		})
+		.collect::<Vec<_>>();
+	let mut scores = Vec::new();
+	for (j, lh) in scores_horiz.iter().enumerate() {
+		for (i, lv) in scores_vert.iter().enumerate() {
+			let (a, b) = lh[i];
+			let (c, d) = lv[j];
+			let score = a * b * c * d;
+			//if score > 0 { println!("{i} {j}: {score}"); }
+			scores.push(score);
+		}
+	}
+	scores.into_iter()
+		.max()
+		.unwrap() as u64
 }
