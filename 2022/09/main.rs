@@ -32,8 +32,8 @@ fn parse(input :&str) -> Vec<(char, u32)> {
 }
 
 fn modify_for_head(hx :i32, hy :i32, tx :&mut i32, ty :&mut i32) -> bool {
-	let x_diff = (hx - *tx).abs();
-	let y_diff = (hy - *ty).abs();
+	let mut x_diff = (hx - *tx).abs();
+	let mut y_diff = (hy - *ty).abs();
 	if x_diff.max(y_diff) > 1 {
 		match (x_diff, y_diff) {
 			(2, 1) => {
@@ -46,14 +46,16 @@ fn modify_for_head(hx :i32, hy :i32, tx :&mut i32, ty :&mut i32) -> bool {
 				*tx = hx;
 				*ty += (hy - *ty).signum();
 			},
-			(2, 2) => {
-				// Move diagonally
-				*tx = (hx - *tx).signum();
-				*ty += (hy - *ty).signum();
-			},
 			(2, 0) => *tx += (hx - *tx).signum(),
 			(0, 2) => *ty += (hy - *ty).signum(),
-			_ => panic!("invalid x_diff={x_diff}, y_diff={y_diff}"),
+			_ => while x_diff.max(y_diff) > 1 {
+				// Move diagonally
+				*tx += (hx - *tx).signum();
+				*ty += (hy - *ty).signum();
+
+				x_diff = (hx - *tx).abs();
+				y_diff = (hy - *ty).abs();
+			},
 		}
 		true
 	} else {
