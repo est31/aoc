@@ -149,9 +149,23 @@ noop
 noop
 ";
 
+const EXAMPLE_OUTPUT :&str = "\
+##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+";
+
 #[test]
 fn test_1() {
 	let cmds = parse(EXAMPLE_INPUT);
-	let sum = signal_strength_sum(&cmds);
+	let (sum, rendered) = render(&cmds);
 	assert_eq!(sum, 13140);
+	println!("is:");
+	println!("{rendered}");
+	println!("\n\nshould be:");
+	println!("{EXAMPLE_OUTPUT}");
+	assert_eq!(rendered.trim(), EXAMPLE_OUTPUT.trim());
 }
