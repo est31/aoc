@@ -33,8 +33,17 @@ Monkey 3:
 #[test]
 fn test_1() {
 	let mnks = parse(EXAMPLE_INPUT);
-	let ins_cnt = get_monkey_inspection_cnt(&mnks);
+	let ins_cnt = get_monkey_inspection_cnt(&mnks, false);
 	assert_eq!(ins_cnt, [101, 95, 7, 105]);
-	let bsns = get_monkey_business(&mnks);
+	let bsns = get_monkey_business(&mnks, false);
 	assert_eq!(bsns, 10605);
+}
+
+#[test]
+fn test_2() {
+	let mnks = parse(EXAMPLE_INPUT);
+	let ins_cnt = get_monkey_inspection_cnt(&mnks, true);
+	assert_eq!(ins_cnt, [52166, 47830, 1938, 52013]);
+	let bsns = get_monkey_business(&mnks, true);
+	assert_eq!(bsns, 2713310158);
 }
