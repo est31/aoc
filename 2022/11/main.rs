@@ -27,6 +27,11 @@ struct Monkey {
 	test :(u64, usize, usize),
 }
 
+fn get_and_split<'a>(mut lines :impl Iterator<Item = &'a str>, sp :&str) -> &'a str {
+	let st = lines.next().unwrap();
+	st.split(sp).nth(1).unwrap()
+}
+
 fn parse(input :&str) -> Vec<Monkey> {
 	let mut lines = input.lines()
 		.map(|l| l.trim())
@@ -35,14 +40,12 @@ fn parse(input :&str) -> Vec<Monkey> {
 	while let Some(line) = lines.next() {
 		if !line.starts_with("Monkey ") { continue; }
 
-		let starting_str = lines.next().unwrap();
-		let starting_list = starting_str.split(": ").nth(1).unwrap();
+		let starting_list = get_and_split(&mut lines, ": ");
 		let starting = starting_list.split(", ")
 			.map(|s| u64::from_str(s).unwrap())
 			.collect::<Vec<_>>();
 
-		let op_line = lines.next().unwrap();
-		let op_str = op_line.split("old ").nth(1).unwrap();
+		let op_str = get_and_split(&mut lines, "old ");
 		let operation = if op_str == "* old" {
 			Operation::Square
 		} else if op_str.starts_with("+") {
@@ -52,17 +55,16 @@ fn parse(input :&str) -> Vec<Monkey> {
 			let prod_str = op_str.split("* ").nth(1).unwrap();
 			Operation::MulConst(u64::from_str(prod_str).unwrap())
 		} else {
-			panic!("invalid operation line '{op_line}'");
+			panic!("invalid operation str 'old {op_str}'");
 		};
 
-		let mod_line = lines.next().unwrap();
-		let div_str = mod_line.split("divisible by ").nth(1).unwrap();
+		let div_str = get_and_split(&mut lines, "divisible by ");
 		let divisor = u64::from_str(div_str).unwrap();
-		let true_line = lines.next().unwrap();
-		let true_str = true_line.split("to monkey ").nth(1).unwrap();
+
+		let true_str = get_and_split(&mut lines, "to monkey ");
 		let true_monkey = usize::from_str(true_str).unwrap();
-		let false_line = lines.next().unwrap();
-		let false_str = false_line.split("to monkey ").nth(1).unwrap();
+
+		let false_str = get_and_split(&mut lines, "to monkey ");
 		let false_monkey = usize::from_str(false_str).unwrap();
 
 		let test = (divisor, true_monkey, false_monkey);
