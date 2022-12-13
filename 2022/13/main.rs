@@ -23,7 +23,7 @@ enum MaybeList {
 impl PartialOrd for MaybeList {
 	fn partial_cmp(&self, other :&Self) -> Option<Ordering> {
 
-		println!("Comparing {self:?} with {other:?}");
+		//println!("Comparing {self:?} with {other:?}");
 		let cmp = |la :&[MaybeList], lb :&[MaybeList]| -> Option<Ordering> {
 			for (ita, itb) in la.iter().zip(lb) {
 				match ita.partial_cmp(itb) {
@@ -50,29 +50,27 @@ fn parse_maybe_list(input :&str) -> (MaybeList, &str) {
 	if let Ok(n) = u32::from_str(input) {
 		return (MaybeList::Num(n), "");
 	}
+
+	if input.is_empty() {
+		return (MaybeList::List(Vec::new()), input);
+	}
+
+	assert_eq!(&input[0..=0], "[");
+	input = &input[1..];
+
 	let mut res = Vec::new();
 	loop {
-		if let Some(skipped) = input.strip_prefix("]") {
-			input = skipped;
-			break;
-		}
-		if input.is_empty() {
-			break;
-		}
-		let mut sp_it = input.splitn(2, '[');
-		let prefix = sp_it.next().unwrap();
-		if !prefix.is_empty() {
-			for comp in prefix.split(',') {
-				res.push(parse_maybe_list(comp).0);
-			}
-		}
-		if let Some(postfix) = sp_it.next() {
-			let postfix = postfix.split(']').nth(0).unwrap();
-			let (ml, postfix) = parse_maybe_list(postfix);
+		if input.starts_with("[") {
+			let (ml, postfix) = parse_maybe_list(input);
 			res.push(ml);
 			input = postfix;
-		} else {
-			input = "";
+		} else if let Some(skipped) = input.strip_prefix("]") {
+			input = skipped;
+			break;
+		} else if let Some((first, second)) = input.split_once([',', ']']) {
+			res.push(parse_maybe_list(first).0);
+			input = second;
+		} else if input.is_empty() {
 			break;
 		}
 	}
