@@ -40,3 +40,10 @@ fn test_1() {
 	let sum = well_ordered_sum(&lists);
 	assert_eq!(sum, 13);
 }
+
+#[test]
+fn test_2() {
+	let lists = parse(EXAMPLE_INPUT);
+	let dk = decoder_key(&lists);
+	assert_eq!(dk, 140);
+}

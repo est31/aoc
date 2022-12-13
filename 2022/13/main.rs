@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::cmp::PartialOrd;
 use std::cmp::Ordering;
 use std::str::FromStr;
@@ -12,13 +11,16 @@ fn main() {
 	let lists = parse(INPUT);
 	let sum = well_ordered_sum(&lists);
 	println!("Well ordered lists: {sum}");
+	let dk = decoder_key(&lists);
+	println!("Decoder key: {dk}");
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 enum MaybeList {
 	List(Vec<MaybeList>),
 	Num(u32),
 }
+
 
 impl PartialOrd for MaybeList {
 	fn partial_cmp(&self, other :&Self) -> Option<Ordering> {
@@ -41,6 +43,12 @@ impl PartialOrd for MaybeList {
 			(la @ MaybeList::Num(_), MaybeList::List(lb)) => cmp([la.clone()].as_slice(), lb.as_slice()),
 		}
 
+	}
+}
+
+impl Ord for MaybeList {
+	fn cmp(&self, other :&Self) -> std::cmp::Ordering {
+		self.partial_cmp(other).unwrap()
 	}
 }
 
@@ -99,4 +107,26 @@ fn well_ordered_sum(lists :&[(MaybeList, MaybeList)]) -> usize {
 		.filter(|(_i, (la, lb))| la <= lb)
 		.map(|(i, _)| i + 1)
 		.sum()
+}
+
+fn decoder_key(lists :&[(MaybeList, MaybeList)]) -> usize {
+	let mut lists = lists.iter()
+		.cloned()
+		.map(|(l0, l1)| [l0, l1].into_iter())
+		.flatten()
+		.collect::<Vec<_>>();
+	let d2 = parse_maybe_list("[[2]]").0;
+	let d6 = parse_maybe_list("[[6]]").0;
+	lists.extend_from_slice(&[d2.clone(), d6.clone()]);
+	lists.sort();
+	//for list in &lists { println!("    {list:?}"); }
+	let v = lists.iter()
+		.enumerate()
+		.filter(|(_i, l)| {
+			*l == &d2 || *l == &d6
+		})
+		.map(|(i, _l)| i + 1)
+		.collect::<Vec<_>>();
+	assert_eq!(v.len(), 2);
+	v.iter().product()
 }
