@@ -24,3 +24,11 @@ fn test_1() {
 	let cap = no_beacons_at(&sensors, 10);
 	assert_eq!(cap, 26);
 }
+
+#[test]
+fn test_2() {
+	let sensors = parse(EXAMPLE_INPUT);
+	println!("{sensors:?}");
+	let tf = find_tuning_freq(&sensors, 20);
+	assert_eq!(tf, 56000011);
+}
