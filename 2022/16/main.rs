@@ -106,7 +106,11 @@ fn max_pressure_release(valves :&HashMap<u8, (u32, Vec<u8>)>, names :&HashMap<St
 fn max_release_after_team(valves :&HashMap<u8, (u32, Vec<u8>)>,
 		valve_me :u8, valve_eleph :u8, remaining :u16, visited :u128,
 		memoized :&mut HashMap<(u8, u8, u128, u16), u32>) -> u32 {
-	if remaining == 0 {
+	if remaining == 0 || remaining == 1 {
+		// If there is 0 remaining time, we can't do anything any more.
+		// If there is 1 remaining time, we could in theory do *something*,
+		// but anything we do won't have any effect on the pressure released.
+		// Thus, we can return early.
 		return 0;
 	}
 
