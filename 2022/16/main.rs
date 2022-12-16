@@ -110,7 +110,9 @@ fn max_release_after_team(valves :&HashMap<u8, (u32, Vec<u8>)>,
 		return 0;
 	}
 
-	if let Some(res) = memoized.get(&(valve_me, valve_eleph, visited, remaining)) {
+	let valve_min = valve_me.min(valve_eleph);
+	let valve_max = valve_me.max(valve_eleph);
+	if let Some(res) = memoized.get(&(valve_min, valve_max, visited, remaining)) {
 		return *res;
 	}
 
@@ -167,7 +169,7 @@ fn max_release_after_team(valves :&HashMap<u8, (u32, Vec<u8>)>,
 		}
 	}
 
-	memoized.insert((valve_me, valve_eleph, visited, remaining), max);
+	memoized.insert((valve_min, valve_max, visited, remaining), max);
 	max
 }
 
