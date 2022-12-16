@@ -15,8 +15,9 @@ Valve JJ has flow rate=21; tunnel leads to valve II
 
 #[test]
 fn test_1() {
-	let valves = parse(EXAMPLE_INPUT);
+	let (valves, names) = parse(EXAMPLE_INPUT);
+	println!("{names:?}");
 	println!("{valves:?}");
-	let m = max_pressure_release(&valves);
+	let m = max_pressure_release(&valves, &names);
 	assert_eq!(m, 1651);
 }
