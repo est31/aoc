@@ -55,43 +55,46 @@ fn parse(input :&str) -> (HashMap<u8, (u32, Vec<u8>)>, HashMap<String, u8>) {
 	(adj, interned)
 }
 
-fn max_release_after(valves :&HashMap<u8, (u32, Vec<u8>)>, valve :u8, remaining :u16, memoized :&mut HashMap<(u8, u16), u32>) -> u32 {
+fn max_release_after(valves :&HashMap<u8, (u32, Vec<u8>)>, valve :u8, remaining :u16, visited :u128, memoized :&mut HashMap<(u8, u128, u16), u32>) -> u32 {
 	if remaining == 0 {
 		return 0;
 	}
 
-	if let Some(res) = memoized.get(&(valve, remaining)) {
+	if let Some(res) = memoized.get(&(valve, visited, remaining)) {
 		return *res;
 	}
 
 	let vl = &valves[&valve];
 
 	let max_turned_off = vl.1.iter()
-		.map(|nxt| max_release_after(valves, *nxt, remaining - 1, memoized))
+		.map(|nxt| max_release_after(valves, *nxt, remaining - 1, visited, memoized))
 		.max()
 		.unwrap_or(0);
 
+
 	let flow_rate = vl.0;
-	let res = if flow_rate > 0 {
+	let can_activate = (visited >> valve) & 1 == 0;
+	let res = if flow_rate > 0 && can_activate {
+		let visited = visited | 1 << valve;
 		let prod = flow_rate * (remaining as u32 - 1);
 		let max_turned_on = if remaining > 1 {
 			vl.1.iter()
-				.map(|nxt| max_release_after(valves, *nxt, remaining - 2, memoized))
+				.map(|nxt| max_release_after(valves, *nxt, remaining - 2, visited, memoized))
 				.max()
 				.unwrap_or(0)
 		} else {
 			0
 		};
-		(max_turned_on + prod).max(max_turned_on)
+		(max_turned_on + prod).max(max_turned_off)
 	} else {
 		max_turned_off
 	};
-	memoized.insert((valve, remaining), res);
+	memoized.insert((valve, visited, remaining), res);
 	res
 }
 
 fn max_pressure_release(valves :&HashMap<u8, (u32, Vec<u8>)>, names :&HashMap<String, u8>) -> u32 {
 	let mut memoized = HashMap::new();
 	let aa_idx = names["AA"];
-	max_release_after(valves, aa_idx, 30, &mut memoized)
+	max_release_after(valves, aa_idx, 30, 0, &mut memoized)
 }
