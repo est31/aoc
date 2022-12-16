@@ -21,3 +21,12 @@ fn test_1() {
 	let m = max_pressure_release(&valves, &names);
 	assert_eq!(m, 1651);
 }
+
+#[test]
+fn test_2() {
+	let (valves, names) = parse(EXAMPLE_INPUT);
+	println!("{names:?}");
+	println!("{valves:?}");
+	let mt = max_pressure_release_team(&valves, &names);
+	assert_eq!(mt, 1707);
+}
