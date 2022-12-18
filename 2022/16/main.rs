@@ -125,15 +125,21 @@ fn max_release_after_team(valves :&HashMap<u8, (u32, Vec<u8>)>,
 
 	// Push the "do nothing" branch
 	let vl_me = &valves[&valve_me];
-	for vl in vl_me.1.iter() {
-		to_minimize_me.push((visited, None, *vl));
+	// If remaining is <= 2, going somewhere is not
+	// going to affect anything any more.
+	if remaining > 3 {
+		for vl in vl_me.1.iter() {
+			to_minimize_me.push((visited, None, *vl));
+		}
 	}
 	if vl_me.1.is_empty() {
 		to_minimize_me.push((visited, None, valve_me));
 	}
 	let vl_eleph = &valves[&valve_eleph];
-	for vl in vl_eleph.1.iter() {
-		to_minimize_eleph.push((visited, None, *vl));
+	if remaining > 3 {
+		for vl in vl_eleph.1.iter() {
+			to_minimize_eleph.push((visited, None, *vl));
+		}
 	}
 	if vl_eleph.1.is_empty() {
 		to_minimize_eleph.push((visited, None, valve_eleph));
