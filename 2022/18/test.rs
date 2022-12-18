@@ -23,3 +23,11 @@ fn test_1() {
 	let a = surface_area(&cmds);
 	assert_eq!(a, 64);
 }
+
+#[test]
+fn test_2() {
+	let cmds = parse(EXAMPLE_INPUT);
+	println!("{cmds:?}");
+	let a = outside_surface_area(&cmds);
+	assert_eq!(a, 58);
+}
