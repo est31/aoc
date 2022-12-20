@@ -141,6 +141,28 @@ fn buy_robot<'a>(st :&State<'a>, kind :usize) -> Option<State<'a>> {
 	Some(st)
 }
 
+fn upper_geode_limit(st :&State<'_>) -> u32 {
+	let time_rem = st.time_rem as u32;
+
+	let robots_geode = st.robots[3] + (st.building == Some(3)) as u32;
+	let robots_obs = st.robots[2] + (st.building == Some(2)) as u32;
+
+	// The number of geodes we have plus what we will produce until the end
+	// with the current robots.
+	let base = st.resources[3] + time_rem * robots_geode;
+
+	// A simple upper limit calculation of obsidian production.
+	let upper_obsidian_limit = {
+		let base = robots_obs + time_rem * robots_obs;
+		base + (time_rem * (time_rem + 1)) / 2
+	};
+
+	let buildable_robots_obs = upper_obsidian_limit / st.bp.geo_robot_cost.1;
+	// The maximum number of geode robots we can build with the obsidian upper limit
+	let buildable_robots = buildable_robots_obs.min(time_rem);
+	base + buildable_robots * (buildable_robots + 1) / 2 + (time_rem - buildable_robots) * buildable_robots
+}
+
 fn geodes_to_open_st(mut st :State<'_>, cmax :&mut u32) -> u32 {
 	if st.time_rem == 0 || st.time_rem == 1 || (false && st.time_rem == 2 && st.building.is_none()) {
 		let ret = st.resources[3] + st.time_rem as u32 * st.robots[3];
@@ -150,11 +172,7 @@ fn geodes_to_open_st(mut st :State<'_>, cmax :&mut u32) -> u32 {
 		*cmax = (*cmax).max(ret);
 		return ret;
 	}
-	let upper_geode_limit = {
-		let base = st.resources[3] + st.time_rem as u32 * st.robots[3];
-		base + (st.time_rem as u32 * (st.time_rem as u32 + 1)) / 2
-	};
-	if *cmax >= upper_geode_limit {
+	if *cmax >= upper_geode_limit(&st) {
 		return 0;
 	}
 
