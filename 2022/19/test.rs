@@ -25,3 +25,44 @@ fn test_1() {
 	let sum = quality_level_sum(&bps);
 	assert_eq!(sum, 33);
 }
+
+
+#[test]
+fn test_1_20() {
+	let bps = parse(EXAMPLE_INPUT);
+	let bp = &bps[0];
+	println!("{bp:?}");
+
+	// "Minute 9"
+	let st = State {
+		bp,
+		resources : [3, 12, 0, 0],
+		robots : [1, 3, 0, 0],
+		building : None,
+		time_rem : 15,
+	};
+	let gto = geodes_to_open_st(st);
+	assert_eq!(gto, 9);
+
+	// "Minute 16"
+	let st = State {
+		bp,
+		resources : [2, 9, 6, 0],
+		robots : [1, 4, 2, 0],
+		building : None,
+		time_rem : 8,
+	};
+	let gto = geodes_to_open_st(st);
+	assert_eq!(gto, 9);
+
+	// "Minute 19"
+	let st = State {
+		bp,
+		resources : [3, 21, 5, 1],
+		robots : [1, 4, 2, 1],
+		building : None,
+		time_rem : 5,
+	};
+	let gto = geodes_to_open_st(st);
+	assert_eq!(gto, 9);
+}
