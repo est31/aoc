@@ -18,6 +18,7 @@ struct Blueprint {
 	clay_robot_cost :u32,
 	obs_robot_cost :(u32, u32),
 	geo_robot_cost :(u32, u32),
+	max_ore_cost :u32,
 }
 
 fn parse(input :&str) -> Vec<Blueprint> {
@@ -40,11 +41,16 @@ fn parse(input :&str) -> Vec<Blueprint> {
 			let obs_robot_cost = (nums.next().unwrap(), nums.next().unwrap());
 			let geo_robot_cost = (nums.next().unwrap(), nums.next().unwrap());
 
+			let max_ore_cost = ore_robot_cost.max(clay_robot_cost)
+					.max(obs_robot_cost.0)
+					.max(geo_robot_cost.0);
+
 			res.push(Blueprint {
 				ore_robot_cost,
 				clay_robot_cost,
 				obs_robot_cost,
 				geo_robot_cost,
+				max_ore_cost,
 			});
 
 			continue;
@@ -72,11 +78,16 @@ fn parse(input :&str) -> Vec<Blueprint> {
 			.filter_map(Result::ok);
 		let geo_robot_cost = (nums.next().unwrap(), nums.next().unwrap());
 
+		let max_ore_cost = ore_robot_cost.max(clay_robot_cost)
+				.max(obs_robot_cost.0)
+				.max(geo_robot_cost.0);
+
 		res.push(Blueprint {
 			ore_robot_cost,
 			clay_robot_cost,
 			obs_robot_cost,
 			geo_robot_cost,
+			max_ore_cost,
 		});
 	}
 	res
@@ -92,6 +103,20 @@ struct State<'a> {
 }
 
 fn buy_robot<'a>(st :&State<'a>, kind :usize) -> Option<State<'a>> {
+	if kind != 3 {
+		let max_cost = match kind {
+			0 => st.bp.max_ore_cost,
+			1 => st.bp.obs_robot_cost.1,
+			2 => st.bp.geo_robot_cost.1,
+			_ => unreachable!(),
+		};
+		if st.robots[kind] + 1 > max_cost {
+			// It makes no sense to build a robot producing this resource
+			// because it would increase per-round production of that resource
+			// to be larger than any other robot's building cost.
+			return None;
+		}
+	}
 	let mut costs = [0; 4];
 	match kind {
 		0 => costs[0] = st.bp.ore_robot_cost,
