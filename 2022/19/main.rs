@@ -10,6 +10,8 @@ fn main() {
 	let bps = parse(INPUT);
 	let s = quality_level_sum(&bps);
 	println!("Quality level sum: {s}");
+	let p = geodes_product(&bps);
+	println!("Geodes product: {p}");
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -165,13 +167,13 @@ fn geodes_to_open_st(mut st :State<'_>) -> u32 {
 	res
 }
 
-fn geodes_to_open(bp :Blueprint) -> u32 {
+fn geodes_to_open(bp :Blueprint, time_rem :u8) -> u32 {
 	let st = State {
 		bp : &bp,
 		resources : [0; 4],
 		robots : [1, 0, 0, 0],
 		building : None,
-		time_rem : 24,
+		time_rem,
 	};
 	geodes_to_open_st(st)
 }
@@ -179,6 +181,13 @@ fn geodes_to_open(bp :Blueprint) -> u32 {
 fn quality_level_sum(bps :&[Blueprint]) -> u32 {
 	bps.iter()
 		.enumerate()
-		.map(|(i, bp)| (i as u32 + 1) * geodes_to_open(*bp))
+		.map(|(i, bp)| (i as u32 + 1) * geodes_to_open(*bp, 24))
+		.sum()
+}
+
+fn geodes_product(bps :&[Blueprint]) -> u32 {
+	bps.iter()
+		.take(3)
+		.map(|bp| geodes_to_open(*bp, 32))
 		.sum()
 }

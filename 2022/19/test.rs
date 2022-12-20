@@ -26,7 +26,6 @@ fn test_1() {
 	assert_eq!(sum, 33);
 }
 
-
 #[test]
 fn test_1_20() {
 	let bps = parse(EXAMPLE_INPUT);
@@ -65,4 +64,12 @@ fn test_1_20() {
 	};
 	let gto = geodes_to_open_st(st);
 	assert_eq!(gto, 9);
+}
+
+#[test]
+fn test_2() {
+	let bps = parse(EXAMPLE_INPUT);
+
+	assert_eq!(geodes_to_open(bps[0], 32), 56);
+	assert_eq!(geodes_to_open(bps[1], 32), 62);
 }
