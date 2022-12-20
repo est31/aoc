@@ -141,14 +141,23 @@ fn buy_robot<'a>(st :&State<'a>, kind :usize) -> Option<State<'a>> {
 	Some(st)
 }
 
-fn geodes_to_open_st(mut st :State<'_>) -> u32 {
+fn geodes_to_open_st(mut st :State<'_>, cmax :&mut u32) -> u32 {
 	if st.time_rem == 0 || st.time_rem == 1 || (false && st.time_rem == 2 && st.building.is_none()) {
 		let ret = st.resources[3] + st.time_rem as u32 * st.robots[3];
 		/*if ret >= 7 {
 			println!("returning {ret}: {st:?}");
 		}*/
+		*cmax = (*cmax).max(ret);
 		return ret;
 	}
+	let upper_geode_limit = {
+		let base = st.resources[3] + st.time_rem as u32 * st.robots[3];
+		base + (st.time_rem as u32 * (st.time_rem as u32 + 1)) / 2
+	};
+	if *cmax >= upper_geode_limit {
+		return 0;
+	}
+
 	st.time_rem -= 1;
 	for (res, robots) in st.resources.iter_mut().zip(st.robots.iter()) {
 		*res += robots;
@@ -159,11 +168,12 @@ fn geodes_to_open_st(mut st :State<'_>) -> u32 {
 	let max_when_building = (0..4)
 		.filter_map(|kind| {
 			let new_st = buy_robot(&st, kind)?;
-			Some(geodes_to_open_st(new_st))
+			Some(geodes_to_open_st(new_st, cmax))
 		})
 		.max()
 		.unwrap_or(0);
-	let res = geodes_to_open_st(st).max(max_when_building);
+	let res = geodes_to_open_st(st, cmax).max(max_when_building);
+	*cmax = (*cmax).max(res);
 	res
 }
 
@@ -175,7 +185,7 @@ fn geodes_to_open(bp :Blueprint, time_rem :u8) -> u32 {
 		building : None,
 		time_rem,
 	};
-	geodes_to_open_st(st)
+	geodes_to_open_st(st, &mut 0)
 }
 
 fn quality_level_sum(bps :&[Blueprint]) -> u32 {

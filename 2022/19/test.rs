@@ -40,7 +40,7 @@ fn test_1_20() {
 		building : None,
 		time_rem : 15,
 	};
-	let gto = geodes_to_open_st(st);
+	let gto = geodes_to_open_st(st, &mut 0);
 	assert_eq!(gto, 9);
 
 	// "Minute 16"
@@ -51,7 +51,7 @@ fn test_1_20() {
 		building : None,
 		time_rem : 8,
 	};
-	let gto = geodes_to_open_st(st);
+	let gto = geodes_to_open_st(st, &mut 0);
 	assert_eq!(gto, 9);
 
 	// "Minute 19"
@@ -62,7 +62,7 @@ fn test_1_20() {
 		building : None,
 		time_rem : 5,
 	};
-	let gto = geodes_to_open_st(st);
+	let gto = geodes_to_open_st(st, &mut 0);
 	assert_eq!(gto, 9);
 }
 
