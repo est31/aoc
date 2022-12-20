@@ -164,7 +164,7 @@ fn upper_geode_limit(st :&State<'_>) -> u32 {
 }
 
 fn geodes_to_open_st(mut st :State<'_>, cmax :&mut u32) -> u32 {
-	if st.time_rem == 0 || st.time_rem == 1 || (false && st.time_rem == 2 && st.building.is_none()) {
+	if st.time_rem == 0 || st.time_rem == 1 || (st.time_rem == 2 && st.building.is_none()) {
 		let ret = st.resources[3] + st.time_rem as u32 * st.robots[3];
 		/*if ret >= 7 {
 			println!("returning {ret}: {st:?}");
@@ -217,5 +217,5 @@ fn geodes_product(bps :&[Blueprint]) -> u32 {
 	bps.iter()
 		.take(3)
 		.map(|bp| geodes_to_open(*bp, 32))
-		.sum()
+		.product()
 }
