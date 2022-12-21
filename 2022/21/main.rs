@@ -87,61 +87,54 @@ fn root_number(mnks :&HashMap<String, Monkey>) -> i128 {
 }
 
 fn human_number_for(mnks :&HashMap<String, Monkey>, name :&str,
-		goal :i128, found :&mut HashMap<String, i128>) -> i128 {
+		goal :Option<i128>, found :&mut HashMap<String, i128>) -> i128 {
 	if name == "humn" {
-		return goal;
+		return goal.unwrap();
 	}
 	let Monkey::Binop(kind, left, right) = &mnks[name] else {
-		panic!("monkey {name} does not contain human");
+		panic!("monkey {name} is not a binop");
 	};
-	let mut found = HashMap::new();
-	let lval = find_for(mnks, &left, &mut found, true);
-	let rval = find_for(mnks, &right, &mut found, true);
+	let lval = find_for(mnks, &left, found, true);
+	let rval = find_for(mnks, &right, found, true);
 	let (with_human, other) = match (lval, rval) {
 		(None, Some(other)) => (left, other),
 		(Some(other), None) => (right, other),
 		_ => panic!("invalid arms: {lval:?} {rval:?}"),
 	};
-	let new_goal = match kind {
-		BinopKind::Add => goal - other,
-		BinopKind::Sub => match (lval, rval) {
-			// goal = lval - rval
-			(None, Some(other)) => goal + other,
-			(Some(other), None) => other - goal,
-			_ => unreachable!(),
-		},
-		BinopKind::Mul => {
-			if goal % other != 0 {
-				panic!("{goal} is not divisible by {other}!");
-			}
-			goal / other
-		},
-		BinopKind::Div => match (lval, rval) {
-			// goal = lval / rval
-			(None, Some(other)) => goal * other,
-			(Some(other), None) => {
-				if other % goal != 0 {
-					panic!("{other} is not divisible by {goal}!");
-				}
-				other / goal
+	let new_goal = if let Some(goal) = goal {
+		match kind {
+			BinopKind::Add => goal - other,
+			BinopKind::Sub => match (lval, rval) {
+				// goal = lval - rval
+				(None, Some(other)) => goal + other,
+				(Some(other), None) => other - goal,
+				_ => unreachable!(),
 			},
-			_ => unreachable!(),
-		},
+			BinopKind::Mul => {
+				if goal % other != 0 {
+					panic!("{goal} is not divisible by {other}!");
+				}
+				goal / other
+			},
+			BinopKind::Div => match (lval, rval) {
+				// goal = lval / rval
+				(None, Some(other)) => goal * other,
+				(Some(other), None) => {
+					if other % goal != 0 {
+						panic!("{other} is not divisible by {goal}!");
+					}
+					other / goal
+				},
+				_ => unreachable!(),
+			},
+		}
+	} else {
+		// root node :)
+		other
 	};
-	human_number_for(mnks, with_human, new_goal, &mut found)
+	human_number_for(mnks, with_human, Some(new_goal), found)
 }
 
 fn human_number(mnks :&HashMap<String, Monkey>) -> i128 {
-	let Monkey::Binop(_kind, left, right) = &mnks["root"] else {
-		panic!("invalid root monkey");
-	};
-	let mut found = HashMap::new();
-	let lval = find_for(mnks, &left, &mut found, true);
-	let rval = find_for(mnks, &right, &mut found, true);
-	let (with_human, other) = match (lval, rval) {
-		(None, Some(other)) => (left, other),
-		(Some(other), None) => (right, other),
-		_ => panic!("invalid arms: {lval:?} {rval:?}"),
-	};
-	human_number_for(mnks, with_human, other, &mut found)
+	human_number_for(mnks, "root", None, &mut HashMap::new())
 }
