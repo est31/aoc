@@ -10,12 +10,14 @@ fn main() {
 	let nums = parse(INPUT);
 	let s = grove_coords_sum(&nums);
 	println!("Grove coords sum: {s}");
+	let s = grove_coords_sum_dec(&nums);
+	println!("Grove coords sum with dec key: {s}");
 }
 
-fn parse(input :&str) -> Vec<i16> {
+fn parse(input :&str) -> Vec<i64> {
 	input.lines()
 		.map(|l| l.trim())
-		.map(|l| i16::from_str(l).unwrap())
+		.map(|l| i64::from_str(l).unwrap())
 		.collect::<Vec<_>>()
 }
 
@@ -31,11 +33,11 @@ fn map_nums<T :Copy>(nums :&[(T, usize, usize)], head :usize, f :&mut impl FnMut
 	}
 }
 
-fn mix(nums :&[i16]) -> Vec<i16> {
+fn mix(nums :&[i64]) -> Vec<i64> {
 	mix_n(nums, nums.len())
 }
 
-fn mix_n(nums :&[i16], len :usize) -> Vec<i16> {
+fn mix_n(nums :&[i64], len :usize) -> Vec<i64> {
 	let mut nums = nums.iter()
 		.enumerate()
 		.map(|(i, n)| {
@@ -56,6 +58,7 @@ fn mix_n(nums :&[i16], len :usize) -> Vec<i16> {
 	print(&nums, zero_idx);
 	println!();*/
 	for i in 0..len {
+		let i = i % nums.len();
 		let ni = nums[i];
 
 		if ni.0 == 0 {
@@ -66,7 +69,7 @@ fn mix_n(nums :&[i16], len :usize) -> Vec<i16> {
 		nums[ni.1].2 = ni.2;
 		nums[ni.2].1 = ni.1;
 
-		let move_amount = ni.0.abs() + (ni.0 < 0) as i16;
+		let move_amount = (ni.0.abs() + (ni.0 < 0) as i64) % (nums.len() as i64 - 1);
 
 		let mut cur = i;
 		//println!("\nMove {ni:?} by {move_amount}:");
@@ -90,11 +93,30 @@ fn mix_n(nums :&[i16], len :usize) -> Vec<i16> {
 	res
 }
 
-fn grove_coords_sum(nums :&[i16]) -> i16 {
+fn grove_coords_sum(nums :&[i64]) -> i64 {
 	let mixed = mix(nums);
 	let sum = [1000, 2000, 3000].iter()
 		.map(|p| mixed[p % mixed.len()])
 		//.map(|p| { println!("{p}"); p })
 		.sum();
 	sum
+}
+
+const DEC_KEY :i64 = 811589153;
+
+fn grove_coords_sum_dec(nums :&[i64]) -> i64 {
+	let dec = mul_by_dec_key(nums);
+	let mixed = mix_n(&dec, dec.len() * 10);
+	let sum = [1000, 2000, 3000].iter()
+		.map(|p| mixed[p % mixed.len()] as i64)
+		//.map(|p| { println!("{p}"); p })
+		.sum();
+	sum
+}
+
+fn mul_by_dec_key(nums :&[i64]) -> Vec<i64> {
+	nums.iter()
+		.copied()
+		.map(|n| DEC_KEY * n)
+		.collect::<Vec<_>>()
 }

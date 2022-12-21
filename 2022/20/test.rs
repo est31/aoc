@@ -28,3 +28,27 @@ fn test_1() {
 	let s = grove_coords_sum(&nums);
 	assert_eq!(s, 3);
 }
+
+#[test]
+fn test_2() {
+	let nums = parse(EXAMPLE_INPUT);
+	let dec = mul_by_dec_key(&nums);
+	assert_eq!(dec, &[811589153, 1623178306, -2434767459, 2434767459, -1623178306, 0, 3246356612]);
+
+	assert_eq!(
+		mix_n(&dec, dec.len()),
+		&[0, -2434767459, 3246356612, -1623178306, 2434767459, 1623178306, 811589153],
+	);
+	assert_eq!(
+		mix_n(&dec, dec.len() * 2),
+		&[0, 2434767459, 1623178306, 3246356612, -2434767459, -1623178306, 811589153],
+	);
+	// ...
+	assert_eq!(
+		mix_n(&dec, dec.len() * 10),
+		&[0, -2434767459, 1623178306, 3246356612, -1623178306, 2434767459, 811589153],
+	);
+
+	let s = grove_coords_sum_dec(&nums);
+	assert_eq!(s, 1623178306);
+}
