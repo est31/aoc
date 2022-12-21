@@ -44,17 +44,30 @@ fn mix_n(nums :&[i16], len :usize) -> Vec<i16> {
 			(*n, prev_idx, (i + 1) % nums.len())
 		})
 		.collect::<Vec<_>>();
+	let zero_idx = nums.iter()
+		.enumerate()
+		.find(|(_i, v)| v.0 == 0)
+		.unwrap().0;
 	/*let print = |nums :&[(_, _, _)], head :usize| {
 		map_nums(nums, head, &mut |i, n| print!("{n} ({} {}), ", nums[i].1, nums[i].2));
 		println!();
 	};
 	println!("------------------------\nInitial state:");
-	print(&nums, head);
+	print(&nums, zero_idx);
 	println!();*/
 	for i in 0..len {
 		let ni = nums[i];
-		let round_trip_count = ni.0.abs() / (nums.len() as i16 - 1);
-		let move_amount = ni.0.abs() + (ni.0 < 0) as i16 - round_trip_count;
+
+		if ni.0 == 0 {
+			continue;
+		}
+
+		// First step: remove
+		nums[ni.1].2 = ni.2;
+		nums[ni.2].1 = ni.1;
+
+		let move_amount = ni.0.abs() + (ni.0 < 0) as i16;
+
 		let mut cur = i;
 		//println!("\nMove {ni:?} by {move_amount}:");
 		for _ in 0..move_amount {
@@ -64,25 +77,15 @@ fn mix_n(nums :&[i16], len :usize) -> Vec<i16> {
 				nums[cur].2
 			};
 		}
-		if cur == i {
-			// Nothing to do, we are done.
-			continue;
-		}
 		let next_i = nums[cur].2;
 		//println!("cur={cur}, ni={next_i}");
 		nums[cur].2 = i;
 		nums[next_i].1 = i;
 		nums[i].1 = cur;
 		nums[i].2 = next_i;
-		nums[ni.1].2 = ni.2;
-		nums[ni.2].1 = ni.1;
-		//print(&nums, head);
+		//print(&nums, zero_idx);
 	}
 	let mut res = Vec::new();
-	let zero_idx = nums.iter()
-		.enumerate()
-		.find(|(_i, v)| v.0 == 0)
-		.unwrap().0;
 	map_nums(&nums, zero_idx, &mut |_i, n| res.push(n));
 	res
 }
