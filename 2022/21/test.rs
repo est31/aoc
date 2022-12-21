@@ -25,3 +25,11 @@ fn test_1() {
 	let rn = root_number(&mnks);
 	assert_eq!(rn, 152);
 }
+
+#[test]
+fn test_2() {
+	let mnks = parse(EXAMPLE_INPUT);
+	println!("{mnks:?}");
+	let hn = human_number(&mnks);
+	assert_eq!(hn, 301);
+}
