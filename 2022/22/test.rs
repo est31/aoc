@@ -1,7 +1,7 @@
 use super::*;
 
-const EXAMPLE_INPUT :&str = "\
-        ...#
+const EXAMPLE_INPUT :&str =
+"        ...#
         .#..
         #...
         ....
@@ -20,6 +20,8 @@ const EXAMPLE_INPUT :&str = "\
 #[test]
 fn test_1() {
 	let (map, cmds) = parse(EXAMPLE_INPUT);
+	println!("{cmds:?}");
+	print_field(&map);
 	let p = final_password(&map, &cmds);
 	assert_eq!(p, 6032);
 }

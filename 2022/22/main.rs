@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::str::FromStr;
 
 const INPUT :&str = include_str!("input");
@@ -73,7 +72,6 @@ fn parse(input :&str) -> (Map, Vec<Cmd>) {
 	let mut next_are_cmds = false;
 	let mut cmds_line = "";
 	let mut fields = input.lines()
-		.map(|l| l.trim())
 		.filter_map(|l| {
 			if l.is_empty() {
 				next_are_cmds = true;
@@ -146,13 +144,104 @@ fn parse(input :&str) -> (Map, Vec<Cmd>) {
 	(map, cmds)
 }
 
+#[cfg(test)]
+fn print_field(map :&Map) {
+	for l in map.fields.iter() {
+		for fld in l.iter() {
+			let ch = match fld {
+				Field::Void => ' ',
+				Field::Free => '.',
+				Field::Wall => '#',
+			};
+			print!("{ch}");
+		}
+		println!();
+	}
+}
+
 fn run_commands(map :&mut Map, cmds :&[Cmd]) {
-	todo!()
+	for cmd in cmds {
+		let adv = match cmd {
+			Cmd::GoAhead(adv) => *adv,
+			Cmd::TurnLeft => {
+				map.facing = map.facing.checked_sub(1).unwrap_or(3);
+				continue;
+			},
+			Cmd::TurnRight => {
+				map.facing = (map.facing + 1) % 4;
+				continue;
+			},
+		};
+		//println!("adv={adv}");
+		for _ in 0..adv {
+			let ri = map.row_col.0;
+			let ci = map.row_col.1;
+			/*println!("   row={ri} col={ci} facing={}; lh={:?} lv={:?}",
+				map.facing, map.limits_horiz[ri as usize],
+				map.limits_vert[ci as usize]);*/
+			let (nri, nci) = match map.facing {
+				0 => {
+					// 0 is right
+					let lims = map.limits_horiz[ri as usize];
+					let nci = if ci < lims.1 {
+						ci + 1
+					} else {
+						// Wrap around
+						lims.0
+					};
+					(ri, nci)
+				},
+				1 => {
+					// 1 is down
+					let lims = map.limits_vert[ci as usize];
+					let nri = if ri < lims.1 {
+						ri + 1
+					} else {
+						// Wrap around
+						lims.0
+					};
+					(nri, ci)
+				},
+				2 => {
+					// 2 is left
+					let lims = map.limits_horiz[ri as usize];
+					let nci = if ci > lims.0 {
+						ci - 1
+					} else {
+						// Wrap around
+						lims.1
+					};
+					(ri, nci)
+				},
+				3 => {
+					// 3 is up
+					let lims = map.limits_vert[ci as usize];
+					let nri = if ri > lims.0 {
+						ri - 1
+					} else {
+						// Wrap around
+						lims.1
+					};
+					(nri, ci)
+				},
+				_ => panic!("unexpected facing val {}", map.facing),
+			};
+			let nfield = map.fields[nri as usize][nci as usize];
+			match nfield {
+				Field::Void => panic!("Wandering into the void"),
+				// Don't move
+				Field::Wall => (),
+				Field::Free => map.row_col = (nri, nci),
+			}
+		}
+	}
 }
 
 fn final_password(map :&Map, cmds :&[Cmd]) -> u64 {
 	let mut map = map.clone();
 	run_commands(&mut map, cmds);
-	let pw = map.row_col.0 * 1000 + map.row_col.1 * 4 + map.facing as u64;
+	let (row, col) = map.row_col;
+	//println!("row={row} col={col} facing={}", map.facing);
+	let pw = (row + 1) * 1000 + (col + 1) * 4 + map.facing as u64;
 	pw
 }
