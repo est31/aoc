@@ -9,6 +9,8 @@ fn main() {
 	let field = parse(INPUT);
 	let e = empty_ground_tiles(&field);
 	println!("Empty tiles count: {e}");
+	let r = rounds_until_stop(&field);
+	println!("Rounds until stop: {r}");
 }
 
 fn parse(input :&str) -> HashSet<(i16, i16)> {
@@ -25,7 +27,7 @@ fn parse(input :&str) -> HashSet<(i16, i16)> {
 		.collect::<HashSet<_>>()
 }
 
-fn step(field :&HashSet<(i16, i16)>, si :usize) -> HashSet<(i16, i16)> {
+fn step(field :&HashSet<(i16, i16)>, si :usize) -> (HashSet<(i16, i16)>, bool) {
 	let dir_list = [
 		((-1, 0), (0, 1)), // North
 		((1, 0), (0, 1)), // South
@@ -72,9 +74,11 @@ fn step(field :&HashSet<(i16, i16)>, si :usize) -> HashSet<(i16, i16)> {
 		elf_proposals.insert(*pos, dest_pos);
 		*with_proposals.entry(dest_pos).or_default() += 1;
 	}
+	let mut someone_moved = false;
 	//println!("{elf_proposals:?}");
 	for (pos, proposed) in elf_proposals {
 		let npos = if with_proposals[&proposed] <= 1 {
+			someone_moved = true;
 			proposed
 		} else {
 			pos
@@ -82,7 +86,7 @@ fn step(field :&HashSet<(i16, i16)>, si :usize) -> HashSet<(i16, i16)> {
 		new_field.insert(npos);
 	}
 	assert_eq!(new_field.len(), field.len(), "Mismatch in elf census");
-	new_field
+	(new_field, someone_moved)
 }
 
 fn get_field_dimensions(field :&HashSet<(i16, i16)>) -> [(i16, i16); 2] {
@@ -117,7 +121,7 @@ fn field_to_str(field :&HashSet<(i16, i16)>) -> String {
 fn empty_ground_tiles(field :&HashSet<(i16, i16)>) -> u32 {
 	let mut field = field.clone();
 	for si in 0..10 {
-		field = step(&field, si);
+		field = step(&field, si).0;
 		#[cfg(test)]
 		{
 			println!("\n-----------------\nAfter step {si}:");
@@ -136,4 +140,16 @@ fn min_max(it :impl Iterator<Item = i16> + Clone) -> (i16, i16) {
 	let min = it.clone().min().unwrap();
 	let max = it.max().unwrap();
 	(min, max)
+}
+
+fn rounds_until_stop(field :&HashSet<(i16, i16)>) -> u32 {
+	let mut field = field.clone();
+	for si in 0.. {
+		let (nfield, movement) = step(&field, si);
+		field = nfield;
+		if !movement {
+			return si as u32 + 1;
+		}
+	}
+	unreachable!()
 }

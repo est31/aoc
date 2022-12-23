@@ -74,6 +74,11 @@ const EXAMPLE_INPUT_1_9 :&str = "\
 ...#..#..#..
 ";
 
+
+fn step(field :&HashSet<(i16, i16)>, si :usize) -> HashSet<(i16, i16)> {
+	super::step(field, si).0
+}
+
 #[test]
 fn test_1() {
 	let field = parse(EXAMPLE_INPUT_1);
@@ -176,4 +181,15 @@ fn test_1_2() {
 	let field_str = field_to_str(&fld);
 	println!("\n-------------\nAfter step 2:\n{field_str}");
 	assert_eq!(EXAMPLE_INPUT_2_2, field_str);
+}
+
+#[test]
+fn test_2() {
+	let field = parse(EXAMPLE_INPUT_1);
+	let r = rounds_until_stop(&field);
+	assert_eq!(r, 20);
+
+	let field = parse(EXAMPLE_INPUT_2);
+	let r = rounds_until_stop(&field);
+	assert_eq!(r, 4);
 }
