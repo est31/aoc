@@ -141,10 +141,13 @@ fn test_2_steps() {
 
 #[test]
 fn test_2() {
-	let mut field = parse(EXAMPLE_INPUT_2);
+	let field = parse(EXAMPLE_INPUT_2);
 	println!("\n-------------\nStarting field: w={} h={}", field.width, field.height);
 	println!("{}", field.fields);
-	let sp = find_shortest_path(&mut field);
-	println!("{}", sp);
+	let sp = find_shortest_path(&mut field.clone());
+	println!("simple: {sp}");
 	assert_eq!(sp, 18);
+	let sp = find_shortest_path_back_forth(&mut field.clone());
+	println!("back forth: {sp}");
+	assert_eq!(sp, 54);
 }

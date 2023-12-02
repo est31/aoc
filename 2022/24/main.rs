@@ -6,9 +6,11 @@ const INPUT :&str = include_str!("input");
 mod test;
 
 fn main() {
-	let mut field = parse(INPUT);
-	let l = find_shortest_path(&mut field);
+	let field = parse(INPUT);
+	let l = find_shortest_path(&mut field.clone());
 	println!("Shortest path len: {l}");
+	let lbf = find_shortest_path_back_forth(&mut field.clone());
+	println!("Shortest path len: {lbf}");
 }
 
 #[derive(Copy, Clone)]
@@ -194,17 +196,29 @@ fn positions_to_move_to(pos :(u16, u16), field :&Field) -> Vec<(u16, u16)> {
 }
 
 fn find_shortest_path(field :&mut Field) -> u32 {
-	//let mut already_visited = HashMap::new();
+	let start = (0, 0);
+	let goal = (field.width - 1, field.height - 1);
+	find_shortest_path_generic(start, field, goal) + 1
+}
+
+fn find_shortest_path_back_forth(field :&mut Field) -> u32 {
+	let start = (0, 0);
+	let goal = (field.width - 1, field.height - 1);
+
+	let p1 = find_shortest_path_generic(start, field, goal);
+	let p2 = find_shortest_path_generic(goal, field, start);
+	let p3 = find_shortest_path_generic(start, field, goal);
+
+	p1 + p2 + p3 + 3
+}
+
+fn find_shortest_path_generic(start :(u16, u16), field :&mut Field, goal :(u16, u16)) -> u32 {
 	let mut possible_positions = HashSet::new();
-	let pos_goal = (field.width - 1, field.height - 1);
 	let mut step_num = 0;
 	loop {
 		// We can always just wait some number of steps in the start
-		{
-			let free = field.fields.0[0][0].is_free();
-			if free {
-				possible_positions.insert((0, 0));
-			}
+		if field.fields.0[start.1 as usize][start.0 as usize].is_free() {
+			possible_positions.insert(start);
 		}
 		field.step();
 		//println!("step {step_num}. {} positions: {:?}\n{}", possible_positions.len(), possible_positions, field.fields);
@@ -218,13 +232,8 @@ fn find_shortest_path(field :&mut Field) -> u32 {
 					//println!("     {:?} is not free", new_pos);
 					continue;
 				}
-				/*let last_time = *already_visited.entry(new_pos).or_insert(step_num);
-				if last_time < step_num && new_pos != pos {
-					// already visited this one in an earlier step
-					continue;
-				}*/
-				if pos == pos_goal {
-					return step_num + 1;
+				if pos == goal {
+					return step_num;
 				}
 				possible_positions.insert(new_pos);
 			}
