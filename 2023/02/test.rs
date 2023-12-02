@@ -10,6 +10,13 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 
 #[test]
 fn test() {
-	let values = parse(EXAMPLE_INPUT);
-	assert_eq!(8, possible_games_id_sum(&values));
+	let games = parse(EXAMPLE_INPUT);
+	//println!("games: {games:?}");
+	assert_eq!(8, possible_games_id_sum(&games));
+	assert_eq!(48, sum_of_min_powers(&games[0..=0]));
+	assert_eq!(12, sum_of_min_powers(&games[1..=1]));
+	assert_eq!(1560, sum_of_min_powers(&games[2..=2]));
+	assert_eq!(630, sum_of_min_powers(&games[3..=3]));
+	assert_eq!(36, sum_of_min_powers(&games[4..=4]));
+	assert_eq!(2286, sum_of_min_powers(&games));
 }

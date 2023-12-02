@@ -6,10 +6,12 @@ const INPUT :&str = include_str!("input");
 mod test;
 
 fn main() {
-	let groups = parse(INPUT);
-	println!("sum: {}", possible_games_id_sum(&groups));
+	let games = parse(INPUT);
+	println!("sum possble: {}", possible_games_id_sum(&games));
+	println!("sum min powers: {}", sum_of_min_powers(&games));
 }
 
+#[derive(Copy, Clone, Debug)]
 struct Rgb {
 	red: u16,
 	green: u16,
@@ -43,6 +45,9 @@ impl Rgb {
 	fn possible(&self) -> bool {
 		self.red <= 12 && self.green <= 13 && self.blue <= 14
 	}
+	fn power(&self) -> u32 {
+		self.red as u32 * self.green as u32 * self.blue as u32
+	}
 }
 
 fn parse(input: &str) -> Vec<Vec<Rgb>> {
@@ -66,6 +71,25 @@ fn possible_games_id_sum(games: &[Vec<Rgb>]) -> u16 {
 				.all(|rev| rev.possible())
 		})
 		.map(|(i, _rev)| i as u16 + 1)
+		.sum();
+	sum
+}
+
+fn sum_of_min_powers(games: &[Vec<Rgb>]) -> u32 {
+	use std::cmp::max;
+	let sum: u32 = games.iter()
+		.map(|revelations| {
+			let min = revelations.iter()
+				.map(|rev| *rev)
+				.reduce(|left, right| Rgb {
+					red: max(left.red, right.red),
+					green: max(left.green, right.green),
+					blue: max(left.blue, right.blue),
+				})
+				.unwrap();
+			//println!("min: {min:?}");
+			min.power()
+		})
 		.sum();
 	sum
 }
