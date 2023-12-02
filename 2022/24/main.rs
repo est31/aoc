@@ -10,7 +10,7 @@ fn main() {
 	let l = find_shortest_path(&mut field.clone());
 	println!("Shortest path len: {l}");
 	let lbf = find_shortest_path_back_forth(&mut field.clone());
-	println!("Shortest path len: {lbf}");
+	println!("Shortest path len (back and forth): {lbf}");
 }
 
 #[derive(Copy, Clone)]
