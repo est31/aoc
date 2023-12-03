@@ -39,7 +39,7 @@ fn part_numbers(input :&str) -> Vec<u32> {
 				(false, Some((st, num))) => {
 					numbers.entry(i)
 						.or_default()
-						.push((st, j, num));
+						.push((st, j - 1, num));
 					v = None;
 				},
 				(true, Some((st, num))) => {
@@ -77,7 +77,7 @@ fn part_numbers(input :&str) -> Vec<u32> {
 					});
 				if let Some(num) = maybe_num {
 					//println!("   found {num:?} at ({i_n}, {j_n})");
-					part_nums.insert((i, num));
+					part_nums.insert((i_n, num));
 				}
 			});
 		}
