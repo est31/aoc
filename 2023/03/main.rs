@@ -77,12 +77,12 @@ fn part_numbers(input :&str) -> Vec<u32> {
 					});
 				if let Some(num) = maybe_num {
 					//println!("   found {num:?} at ({i_n}, {j_n})");
-					part_nums.insert((i_n, num));
+					part_nums.insert((i, num));
 				}
 			});
 		}
 	}
-	let mut res = part_nums.iter()
+	let mut res = part_nums.into_iter()
 		.map(|(_i, (_st, _end, num))| *num)
 		.collect::<Vec<_>>();
 	res.sort();
