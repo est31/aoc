@@ -15,9 +15,11 @@ const EXAMPLE_INPUT :&str = "\
 
 #[test]
 fn test() {
-	let pn = part_numbers(EXAMPLE_INPUT);
-	assert_eq!(&[35, 467, 592, 598, 617, 633, 664, 755], pn.as_slice());
-	assert_eq!(4361, pn.iter().sum::<u32>());
+	let pn_gr = pn_gr(EXAMPLE_INPUT);
+	assert_eq!(&[35, 467, 592, 598, 617, 633, 664, 755], pn_gr.0.as_slice());
+	assert_eq!(4361, pn_gr.0.iter().sum::<u32>());
+	assert_eq!(&[16345, 451490], pn_gr.1.as_slice());
+	assert_eq!(467835, pn_gr.1.iter().sum::<u32>());
 }
 
 const INPUT_EXTRACT :&str = "\

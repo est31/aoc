@@ -6,8 +6,9 @@ const INPUT :&str = include_str!("input");
 mod test;
 
 fn main() {
-	let pn = part_numbers(INPUT);
-	println!("sum: {}", pn.iter().sum::<u32>());
+	let pn_gr = pn_gr(INPUT);
+	println!("part number sum: {}", pn_gr.0.iter().sum::<u32>());
+	println!("gear ratios: {}", pn_gr.1.iter().sum::<u32>());
 }
 
 fn run_around_pos(pos :(usize, usize), mut f: impl FnMut(usize, usize)) {
@@ -28,6 +29,10 @@ fn run_around_pos(pos :(usize, usize), mut f: impl FnMut(usize, usize)) {
 }
 
 fn part_numbers(input :&str) -> Vec<u32> {
+	pn_gr(input).0
+}
+
+fn pn_gr(input :&str) -> (Vec<u32>, Vec<u32>) {
 	let lines = input.lines()
 		.map(|l| l.trim())
 		.filter(|l| !l.is_empty());
@@ -63,12 +68,14 @@ fn part_numbers(input :&str) -> Vec<u32> {
 	}
 	//println!("numbers: {numbers:?}");
 	let mut part_nums = HashSet::new();
+	let mut gear_ratios = Vec::new();
 	for (i, l) in lines.clone().enumerate() {
 		for (j, ch) in l.chars().enumerate() {
 			if !ch.is_ascii_punctuation() || ch == '.' {
 				continue;
 			}
 			//println!(" punct {ch} at ({i}, {j})");
+			let mut adj = HashSet::new();
 			run_around_pos((i, j), |i_n, j_n| {
 				let Some(nums) = numbers.get(&i_n) else { return };
 				let maybe_num = nums.iter()
@@ -78,13 +85,22 @@ fn part_numbers(input :&str) -> Vec<u32> {
 				if let Some(num) = maybe_num {
 					//println!("   found {num:?} at ({i_n}, {j_n})");
 					part_nums.insert((i_n, num));
+					if ch == '*' {
+						adj.insert((i_n, num));
+					}
 				}
 			});
+			if adj.len() == 2 {
+				let gear_ratio = adj.iter()
+					.map(|(_i, (_st, _end, num))| *num)
+					.product();
+				gear_ratios.push(gear_ratio);
+			}
 		}
 	}
-	let mut res = part_nums.into_iter()
+	let mut part_nums_vec = part_nums.into_iter()
 		.map(|(_i, (_st, _end, num))| *num)
 		.collect::<Vec<_>>();
-	res.sort();
-	res
+	part_nums_vec.sort();
+	(part_nums_vec, gear_ratios)
 }
