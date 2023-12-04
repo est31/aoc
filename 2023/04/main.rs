@@ -10,6 +10,8 @@ fn main() {
 	let cards = parse(INPUT);
 	let worth = get_worth(&cards);
 	println!("worth: {worth}");
+	let cards_num = get_cards_num(&cards);
+	println!("cards num: {cards_num}");
 }
 
 fn parse(input :&str) -> Vec<(Vec<u8>, Vec<u8>)> {
@@ -32,20 +34,47 @@ fn parse(input :&str) -> Vec<(Vec<u8>, Vec<u8>)> {
 		.collect::<Vec<_>>()
 }
 
-fn get_worth(cards :&[(Vec<u8>, Vec<u8>)]) -> u32 {
+fn get_matches_it(cards :&[(Vec<u8>, Vec<u8>)]) -> impl Iterator<Item = usize> + '_ {
 	cards.iter()
 		.map(|(winning, present)| {
 			let winning_hs = winning.iter()
 				.map(|n| *n)
 				.collect::<HashSet<_>>();
-			let sh = present.iter()
+			let matches = present.iter()
 				.filter(|n| winning_hs.contains(n))
 				.count();
-			if sh == 0 {
+			matches
+		})
+}
+
+fn get_worth(cards :&[(Vec<u8>, Vec<u8>)]) -> u32 {
+	get_matches_it(cards)
+		.map(|matches| {
+			if matches == 0 {
 				0
 			} else {
-				1 << (sh - 1)
+				1 << (matches - 1)
 			}
 		})
 		.sum()
+}
+
+fn get_cards_num(cards :&[(Vec<u8>, Vec<u8>)]) -> u32 {
+	get_mult_cards_num(cards).1
+}
+
+fn get_mult_cards_num(cards :&[(Vec<u8>, Vec<u8>)]) -> (Vec<u32>, u32) {
+	let mut multipliers = vec![1; cards.len()];
+	let mut sum = 0;
+	for (i, matches) in get_matches_it(cards).enumerate() {
+		let mult = multipliers[i];
+		sum += mult;
+		if i < cards.len() - 1 {
+			let high = cards.len().min(i + matches + 1);
+			for v in multipliers[(i + 1)..high].iter_mut() {
+				*v += mult;
+			}
+		}
+	}
+	(multipliers, sum)
 }
