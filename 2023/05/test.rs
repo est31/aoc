@@ -43,4 +43,8 @@ fn test() {
 	assert_eq!(almanac.lookup_seeds(), &[82, 43, 86, 35]);
 	let closest_location = almanac.min_location_from_seed();
 	assert_eq!(closest_location, 35);
+	let closest_location = almanac.min_location_from_seed_bruteforce();
+	assert_eq!(closest_location, 46);
+	let closest_location_ranges = almanac.min_location_from_seed_ranges();
+	assert_eq!(closest_location_ranges, 46);
 }
