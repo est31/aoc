@@ -58,9 +58,49 @@ fn number_of_beating_hold_times_bf(time :u64, dist :u64) -> u64 {
 		.count() as u64
 }
 
-fn number_of_beating_hold_times(time :u64, dist :u64) -> u64 {
+fn isqrt(input :u64) -> u64 {
+	// TODO https://github.com/rust-lang/rust/issues/116226
+	// eww floats
+	(input as f64).sqrt() as u64
+}
+
+#[allow(unused)]
+// doesn't work, there is bugs :/
+fn number_of_beating_hold_times_fast(time :u64, dist :u64) -> u64 {
 	// question: how many h exist so that h*(time - h) > dist?
-	// h*time - h*h - dist = 0
+	// -h*h + h*time - dist = 0
+	let disc = (time * time).checked_sub(4 * dist);
+	println!("time={time} dist={dist} disc={disc:?}");
+	match disc {
+		None => 0,
+		Some(0) => 1,
+		Some(disc) => {
+			let sqrt = isqrt(disc * 4);
+			/*if sqrt*sqrt == disc {
+				sqrt - 2
+			} else {
+				// sqrt was rounded down, meaning we need to add two
+				sqrt + 1
+			}*/
+			let res = if (sqrt / 2) * 2 < sqrt {
+				println!(" -> if");
+				sqrt / 2 + 1
+			} else {
+				if (sqrt * sqrt) / 4 == disc {
+					println!(" -> el 1");
+					sqrt / 2 - 1
+				} else {
+					println!(" -> el 2");
+					sqrt / 2
+				}
+			};
+			println!(" -> sqrt={sqrt} sq={} res={res}", sqrt*sqrt);
+			res
+		},
+	}
+}
+
+fn number_of_beating_hold_times(time :u64, dist :u64) -> u64 {
 	number_of_beating_hold_times_bf(time, dist)
 }
 
