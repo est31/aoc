@@ -7,12 +7,12 @@ const INPUT :&str = include_str!("input");
 #[cfg(test)]
 mod test;
 
-type Int = u32;
+type Int = u64;
 
 fn main() {
 	let almanac = parse(INPUT);
 	println!("closest location: {}", almanac.min_location_from_seed());
-	println!("closest location (ranges, bruteforce): {}", almanac.min_location_from_seed_bruteforce());
+	//println!("closest location (ranges, bruteforce): {}", almanac.min_location_from_seed_bruteforce());
 	println!("closest location (ranges): {}", almanac.min_location_from_seed_ranges());
 }
 
@@ -32,6 +32,9 @@ impl Map {
 			None
 		}
 	}
+	fn dest_end(&self) -> Int {
+		self.dest_start + self.length
+	}
 }
 
 fn lookup_in_maps(num :Int, maps :&[Map]) -> Option<Int> {
@@ -39,34 +42,38 @@ fn lookup_in_maps(num :Int, maps :&[Map]) -> Option<Int> {
 }
 
 fn lookup_ranges_in_maps(ranges :&[Range<Int>], maps :&[Map]) -> Vec<Range<Int>> {
-	#[derive(PartialOrd, Ord, PartialEq, Eq)]
+	#[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
 	enum Event<'a> {
-		InStart,
 		InEnd,
-		MapStart(&'a Map),
+		InStart,
 		MapEnd,
+		MapStart(&'a Map),
 	}
 	let map_events = maps.iter()
 		.map(|map| [
 			(map.source_start, Event::MapStart(map)),
-			(map.source_start + map.length - 1, Event::MapEnd),
+			(map.source_start + map.length, Event::MapEnd),
 		].into_iter())
 		.flatten();
-	let mut events = ranges.iter()
+	let ranges = ranges.iter()
+		.filter(|r| !r.is_empty());
+	let mut events = ranges
 		.map(|range| [(range.start, Event::InStart), (range.end, Event::InEnd)].into_iter())
 		.flatten()
 		.chain(map_events)
 		.collect::<Vec<(Int, Event<'_>)>>();
-	events.sort_by_key(|ev| ev.0);
+	events.sort();
 
 	// Now do the sweep
 	let mut res = Vec::new();
 	let mut opened_input: Option<Int> = None;
 	let mut opened_map: Option<(Int, &Map)> = None;
+	//println!("events: {events:?}");
 	for (v, ev) in events {
+		//println!("  at v={v}, event={ev:?}");
 		match ev {
 			Event::InStart => {
-				assert_eq!(opened_input, None, "overlapping input range");
+				assert_eq!(opened_input, None, "overlapping input range at {v}");
 				opened_input = Some(v);
 			}
 			Event::InEnd => {
@@ -74,22 +81,26 @@ fn lookup_ranges_in_maps(ranges :&[Range<Int>], maps :&[Map]) -> Vec<Range<Int>>
 				if let Some((m_st, map)) = opened_map {
 					let start = start.max(m_st);
 					let start_conv = map.convert(start).unwrap();
-					let end_conv = map.convert(v).unwrap();
+					let end_conv = map.convert(v).unwrap_or(map.dest_end());
 					res.push(start_conv..end_conv);
 				} else {
 					res.push(start..v);
 				}
 			}
 			Event::MapStart(map) => {
-				assert_eq!(opened_map, None, "overlapping input range");
+				assert_eq!(opened_map, None, "overlapping input range at {v}");
 				opened_map = Some((v, map));
+				if let Some(i_st) = &mut opened_input {
+					res.push(*i_st..v);
+					*i_st = v;
+				}
 			}
 			Event::MapEnd => {
 				let (start, map) = opened_map.take().unwrap();
 				if let Some(i_st) = &mut opened_input {
 					let start = start.max(*i_st);
 					let start_conv = map.convert(start).unwrap();
-					let end_conv = map.dest_start + map.length;
+					let end_conv = map.dest_end();
 					res.push(start_conv..end_conv);
 					*i_st = v;
 				}
@@ -116,7 +127,7 @@ impl Almanac {
 
 		//println!("starting out with: {src:?}");
 		while src_category != "location" {
-			println!("  {src_category} ({})", src.len());
+			//println!("  {src_category} ({})", src.len());
 			let mapping = self.map.get(src_category).unwrap();
 			src = src.into_iter()
 				.map(|src_num| {
@@ -139,7 +150,6 @@ impl Almanac {
 			})
 			.collect::<Vec<_>>()
 	}
-	#[allow(unused)]
 	fn lookup_seeds_bruteforce(&self) -> Vec<Int> {
 		let seeds = self.seeds_ranges().into_iter()
 			.flatten()
@@ -153,11 +163,11 @@ impl Almanac {
 		let mut src_category = &seed;
 		let mut src = seeds_ranges;
 
-		println!("starting out with: {src:?}");
+		//println!("starting out with: {src:?}");
 		while src_category != "location" {
 			let mapping = self.map.get(src_category).unwrap();
 			src = lookup_ranges_in_maps(&src, &mapping.0);
-			println!("{src_category} to {} becomes: {src:?}", mapping.1);
+			//println!("{src_category} to {} becomes: {src:?}", mapping.1);
 			src_category = &mapping.1;
 		}
 		src
@@ -168,6 +178,7 @@ impl Almanac {
 			.min()
 			.unwrap()
 	}
+	#[allow(unused)]
 	fn min_location_from_seed_bruteforce(&self) -> Int {
 		*self.lookup_seeds_bruteforce()
 			.iter()
@@ -216,6 +227,7 @@ fn parse(input :&str) -> Almanac {
 				source_start: ints_it.next().unwrap(),
 				length: ints_it.next().unwrap(),
 			};
+			assert!(map.length != 0, "map length is 0");
 			maps.push(map);
 		}
 		map.insert(src, (maps, dest));

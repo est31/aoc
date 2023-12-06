@@ -45,6 +45,17 @@ fn test() {
 	assert_eq!(closest_location, 35);
 	let closest_location = almanac.min_location_from_seed_bruteforce();
 	assert_eq!(closest_location, 46);
+	let mut locations = almanac.lookup_seeds_bruteforce();
+	locations.sort();
+	let locations_expected = &[46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+		58, 59, 60, 82, 83, 84, 86, 87, 88, 89, 94, 95, 96, 97, 98];
+	assert_eq!(locations_expected, locations.as_slice());
+	let mut locations_ranges = almanac.lookup_seeds_ranges()
+		.into_iter()
+		.flatten()
+		.collect::<Vec<_>>();
+	locations_ranges.sort();
+	assert_eq!(locations_expected, locations_ranges.as_slice());
 	let closest_location_ranges = almanac.min_location_from_seed_ranges();
 	assert_eq!(closest_location_ranges, 46);
 }
