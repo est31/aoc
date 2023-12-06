@@ -7,6 +7,8 @@ const INPUT :&str = include_str!("input");
 #[cfg(test)]
 mod test;
 
+type Int = u32;
+
 fn main() {
 	let almanac = parse(INPUT);
 	println!("closest location: {}", almanac.min_location_from_seed());
@@ -16,13 +18,13 @@ fn main() {
 
 #[derive(Copy, Clone, Debug, PartialOrd, Ord, PartialEq, Eq)]
 struct Map {
-	source_start :u64,
-	dest_start :u64,
-	length :u64,
+	source_start :Int,
+	dest_start :Int,
+	length :Int,
 }
 
 impl Map {
-	fn convert(&self, source :u64) -> Option<u64> {
+	fn convert(&self, source :Int) -> Option<Int> {
 		let src_st = self.source_start;
 		if (src_st..(self.length + src_st)).contains(&source) {
 			Some(self.dest_start + source - src_st)
@@ -32,11 +34,11 @@ impl Map {
 	}
 }
 
-fn lookup_in_maps(num :u64, maps :&[Map]) -> Option<u64> {
+fn lookup_in_maps(num :Int, maps :&[Map]) -> Option<Int> {
 	maps.iter().filter_map(|m| m.convert(num)).next()
 }
 
-fn lookup_ranges_in_maps(ranges :&[Range<u64>], maps :&[Map]) -> Vec<Range<u64>> {
+fn lookup_ranges_in_maps(ranges :&[Range<Int>], maps :&[Map]) -> Vec<Range<Int>> {
 	#[derive(PartialOrd, Ord, PartialEq, Eq)]
 	enum Event<'a> {
 		InStart,
@@ -54,13 +56,13 @@ fn lookup_ranges_in_maps(ranges :&[Range<u64>], maps :&[Map]) -> Vec<Range<u64>>
 		.map(|range| [(range.start, Event::InStart), (range.end, Event::InEnd)].into_iter())
 		.flatten()
 		.chain(map_events)
-		.collect::<Vec<(u64, Event<'_>)>>();
+		.collect::<Vec<(Int, Event<'_>)>>();
 	events.sort_by_key(|ev| ev.0);
 
 	// Now do the sweep
 	let mut res = Vec::new();
-	let mut opened_input: Option<u64> = None;
-	let mut opened_map: Option<(u64, &Map)> = None;
+	let mut opened_input: Option<Int> = None;
+	let mut opened_map: Option<(Int, &Map)> = None;
 	for (v, ev) in events {
 		match ev {
 			Event::InStart => {
@@ -99,21 +101,22 @@ fn lookup_ranges_in_maps(ranges :&[Range<u64>], maps :&[Map]) -> Vec<Range<u64>>
 
 #[derive(Debug)]
 struct Almanac {
-	seeds :Vec<u64>,
+	seeds :Vec<Int>,
 	map :HashMap<String, (Vec<Map>, String)>,
 }
 
 impl Almanac {
-	fn lookup_seeds(&self) -> Vec<u64> {
+	fn lookup_seeds(&self) -> Vec<Int> {
 		self.lookup_seeds_generic(self.seeds.clone())
 	}
-	fn lookup_seeds_generic(&self, seeds :Vec<u64>) -> Vec<u64> {
+	fn lookup_seeds_generic(&self, seeds :Vec<Int>) -> Vec<Int> {
 		let seed = "seed".to_string();
 		let mut src_category = &seed;
 		let mut src = seeds;
 
 		//println!("starting out with: {src:?}");
 		while src_category != "location" {
+			println!("  {src_category} ({})", src.len());
 			let mapping = self.map.get(src_category).unwrap();
 			src = src.into_iter()
 				.map(|src_num| {
@@ -127,7 +130,7 @@ impl Almanac {
 		}
 		src
 	}
-	fn seeds_ranges(&self) -> Vec<Range<u64>> {
+	fn seeds_ranges(&self) -> Vec<Range<Int>> {
 		self.seeds.chunks(2)
 			.map(|ch| {
 				let st = ch[0];
@@ -137,13 +140,13 @@ impl Almanac {
 			.collect::<Vec<_>>()
 	}
 	#[allow(unused)]
-	fn lookup_seeds_bruteforce(&self) -> Vec<u64> {
+	fn lookup_seeds_bruteforce(&self) -> Vec<Int> {
 		let seeds = self.seeds_ranges().into_iter()
 			.flatten()
 			.collect::<Vec<_>>();
 		self.lookup_seeds_generic(seeds)
 	}
-	fn lookup_seeds_ranges(&self) -> Vec<Range<u64>> {
+	fn lookup_seeds_ranges(&self) -> Vec<Range<Int>> {
 		let seeds_ranges = self.seeds_ranges();
 
 		let seed = "seed".to_string();
@@ -159,19 +162,19 @@ impl Almanac {
 		}
 		src
 	}
-	fn min_location_from_seed(&self) -> u64 {
+	fn min_location_from_seed(&self) -> Int {
 		*self.lookup_seeds()
 			.iter()
 			.min()
 			.unwrap()
 	}
-	fn min_location_from_seed_bruteforce(&self) -> u64 {
+	fn min_location_from_seed_bruteforce(&self) -> Int {
 		*self.lookup_seeds_bruteforce()
 			.iter()
 			.min()
 			.unwrap()
 	}
-	fn min_location_from_seed_ranges(&self) -> u64 {
+	fn min_location_from_seed_ranges(&self) -> Int {
 		self.lookup_seeds_ranges()
 			.iter()
 			.map(|r| r.start)
@@ -188,7 +191,7 @@ fn parse(input :&str) -> Almanac {
 		.nth(1)
 		.unwrap()
 		.split_whitespace()
-		.map(|c| u64::from_str(c.trim())
+		.map(|c| Int::from_str(c.trim())
 			.map_err(|e| format!("'{c}' is not a valid int: {e}"))
 			.unwrap())
 		.collect::<Vec<_>>();
@@ -205,7 +208,7 @@ fn parse(input :&str) -> Almanac {
 				break;
 			}
 			let mut ints_it = l.split_whitespace()
-				.map(|c| u64::from_str(c.trim())
+				.map(|c| Int::from_str(c.trim())
 					.map_err(|e| format!("'{c}' is not a valid int: {e}"))
 					.unwrap());
 			let map = Map {
