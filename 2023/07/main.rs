@@ -8,7 +8,8 @@ mod test;
 
 fn main() {
 	let hands_bids = parse(INPUT);
-	println!("total winnings: {}", total_winnings(&hands_bids));
+	println!("total winnings: {}", total_winnings(&hands_bids, false));
+	println!("total winnings with J: {}", total_winnings(&hands_bids, true));
 }
 
 fn parse(input :&str) -> Vec<([u8; 5], u32)> {
@@ -27,12 +28,12 @@ fn parse(input :&str) -> Vec<([u8; 5], u32)> {
 		.collect::<Vec<_>>()
 }
 
-fn card_strength(card :u8) -> u8 {
+fn card_strength(card :u8, joker_low :bool) -> u8 {
 	match card {
 		b'A' => 0,
 		b'K' => 1,
 		b'Q' => 2,
-		b'J' => 3,
+		b'J' => if joker_low { 13 } else { 3 },
 		b'T' => 4,
 		b'9' => 5,
 		b'8' => 6,
@@ -46,8 +47,8 @@ fn card_strength(card :u8) -> u8 {
 	}
 }
 
-fn hand_strength(hand :&[u8; 5]) -> [u8; 5] {
-	hand.map(card_strength)
+fn hand_strength(hand :&[u8; 5], joker_low :bool) -> [u8; 5] {
+	hand.map(|card| card_strength(card, joker_low))
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug)]
@@ -61,11 +62,43 @@ enum HandType {
 	HighCard,
 }
 
-fn hand_type(hand :&[u8; 5]) -> HandType {
+fn hand_type(hand :&[u8; 5], joker_mode :bool) -> HandType {
 	let mut occurences = HashMap::new();
 	for card in hand.iter() {
 		*occurences.entry(*card).or_default() += 1;
 	}
+	let jokers_present = *occurences.get(&b'J').unwrap_or(&0);
+	if !joker_mode || jokers_present == 0 {
+		return hand_type_inner(hand, &occurences);
+	}
+	if jokers_present == 5 {
+		return HandType::FiveKind;
+	}
+	fn ht(hand :&[u8; 5], occurences :&mut HashMap<u8, u8>) -> HandType {
+		{
+			let joker_occ_mut = occurences.get_mut(&b'J').unwrap();
+			if *joker_occ_mut == 0 {
+				return hand_type_inner(hand, occurences);
+			} else {
+				*joker_occ_mut -= 1;
+			}
+		}
+		let ret = occurences.iter()
+			.filter(|(card, _occ)| **card != b'J')
+			.map(|(card, _occ)| {
+				let mut occurences = occurences.clone();
+				*occurences.get_mut(card).unwrap() += 1;
+				ht(hand, &mut occurences)
+			})
+			.min()
+			.unwrap();
+		*occurences.get_mut(&b'J').unwrap() += 1;
+		ret
+	}
+	ht(hand, &mut occurences)
+}
+
+fn hand_type_inner(hand :&[u8; 5], occurences :&HashMap<u8, u8>) -> HandType {
 	let mut occurences = occurences.iter()
 		.map(|(_card, occ)| occ)
 		.collect::<Vec<_>>();
@@ -86,9 +119,9 @@ fn hand_type(hand :&[u8; 5]) -> HandType {
 	}
 }
 
-fn total_winnings(hands_bids :&[([u8; 5], u32)]) -> u32 {
+fn total_winnings(hands_bids :&[([u8; 5], u32)], joker_mode :bool) -> u32 {
 	let mut hands_bids = hands_bids.iter()
-		.map(|(hand, bid)| (hand, bid, hand_type(hand), hand_strength(hand)))
+		.map(|(hand, bid)| (hand, bid, hand_type(hand, joker_mode), hand_strength(hand, joker_mode)))
 		.collect::<Vec<_>>();
 
 	hands_bids.sort_by_key(|(_h, _b, ty, strength)| (*ty, *strength));

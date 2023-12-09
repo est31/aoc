@@ -12,5 +12,6 @@ QQQJA 483
 fn test() {
 	let hands_bids = parse(EXAMPLE_INPUT);
 	println!("{hands_bids:?}");
-	assert_eq!(total_winnings(&hands_bids), 6440);
+	assert_eq!(total_winnings(&hands_bids, false), 6440);
+	assert_eq!(total_winnings(&hands_bids, true), 5905);
 }
