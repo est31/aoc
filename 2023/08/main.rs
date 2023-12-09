@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let network = parse(INPUT);
 	println!("steps required: {}", steps_required(&network));
+	println!("steps required ghosts: {}", steps_required_ghosts(&network));
 }
 
 type Network = (Vec<bool>, HashMap<u16, (String, (u16, u16))>, HashMap<String, u16>);
@@ -67,4 +68,37 @@ fn steps_required(network :&Network) -> u32 {
 		cnt += 1;
 	}
 	cnt
+}
+
+fn steps_required_ghosts(network :&Network) -> u32 {
+	let (l_r, nodes, node_ids) = network;
+
+	let start_nodes = node_ids.iter()
+		.filter(|(name, _id)| name.ends_with('A'))
+		.map(|(_name, id)| *id)
+		.collect::<Vec<_>>();
+
+	let mut l_r_it = l_r.iter().cycle();
+	let mut cur_nodes = start_nodes;
+	let mut cnt = 0;
+	loop {
+		let right = l_r_it.next().unwrap();
+		let mut end_node_count = 0;
+		for cur_id in cur_nodes.iter_mut() {
+			let node = &nodes[&*cur_id];
+			*cur_id = if *right {
+				node.1.1
+			} else {
+				node.1.0
+			};
+			if node.0.ends_with('Z') {
+				end_node_count += 1;
+			}
+		}
+		if end_node_count == cur_nodes.len() {
+			return cnt;
+		}
+
+		cnt += 1;
+	}
 }
