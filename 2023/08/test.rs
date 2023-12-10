@@ -53,3 +53,14 @@ fn test_3() {
 	println!("{:?}", network.1);
 	assert_eq!(steps_required_ghosts(&network), 6);
 }
+
+#[test]
+fn test_gcd_lcm() {
+	assert_eq!(gcd(14, 4), 2);
+	assert_eq!(gcd(30, 105), 15);
+	assert_eq!(gcd(7, 13), 1);
+
+	assert_eq!(lcm(14, 4), 28);
+	assert_eq!(lcm(30, 105), 210);
+	assert_eq!(lcm(7, 13), 91);
+}

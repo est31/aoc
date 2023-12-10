@@ -70,6 +70,21 @@ fn steps_required(network :&Network) -> u32 {
 	cnt
 }
 
+fn gcd(a :u64, b :u64) -> u64 {
+	let mut a = a;
+	let mut b = b;
+	while b != 0 {
+		let tmp = b;
+		b = a % b;
+		a = tmp;
+	}
+	a
+}
+
+fn lcm(a :u64, b :u64) -> u64 {
+	(a / gcd(a, b)) * b
+}
+
 fn steps_required_ghosts(network :&Network) -> u64 {
 	let (l_r, nodes, node_ids) = network;
 
@@ -78,7 +93,39 @@ fn steps_required_ghosts(network :&Network) -> u64 {
 		.map(|(_name, id)| *id)
 		.collect::<Vec<_>>();
 
-	let mut l_r_it = l_r.iter().cycle();
+	let mut cycles = start_nodes.iter()
+		.map(|start_node| {
+			let mut l_r_it = l_r.iter().cycle().enumerate();
+			let mut cur_id = *start_node;
+			let mut ending_offsets = Vec::new();
+			let mut visited = HashMap::new();
+			let (prefix_len, total_len) = loop {
+				let (l_r_offs, right) = l_r_it.next().unwrap();
+				let m = l_r_offs % l_r.len();
+
+				if let Some(prior_l_r_offs) = visited.insert((m, cur_id), l_r_offs) {
+					break (prior_l_r_offs, l_r_offs);
+				}
+
+				let node = &nodes[&cur_id];
+				cur_id = if *right {
+					node.1.1
+				} else {
+					node.1.0
+				};
+				if node.0.ends_with('Z') {
+					ending_offsets.push(l_r_offs);
+				}
+			};
+			(ending_offsets, prefix_len, total_len)
+		})
+		.collect::<Vec<_>>();
+
+	println!("cycles: {cycles:?}");
+
+	panic!();
+	/*
+
 	let mut cur_nodes = start_nodes;
 	let mut cnt = 0;
 	let mut max_end_node_count = 0;
@@ -105,5 +152,5 @@ fn steps_required_ghosts(network :&Network) -> u64 {
 		}
 
 		cnt += 1;
-	}
+	}*/
 }
