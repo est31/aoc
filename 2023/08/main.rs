@@ -70,7 +70,7 @@ fn steps_required(network :&Network) -> u32 {
 	cnt
 }
 
-fn gcd(a :u64, b :u64) -> u64 {
+fn gcd(a :u128, b :u128) -> u128 {
 	let mut a = a;
 	let mut b = b;
 	while b != 0 {
@@ -81,11 +81,13 @@ fn gcd(a :u64, b :u64) -> u64 {
 	a
 }
 
-fn lcm(a :u64, b :u64) -> u64 {
-	(a / gcd(a, b)) * b
+fn lcm(a :u128, b :u128) -> u128 {
+	let res = (a / gcd(a, b)) * b;
+	println!("lcm({a}, {b}) = {res}");
+	res
 }
 
-fn steps_required_ghosts(network :&Network) -> u64 {
+fn steps_required_ghosts(network :&Network) -> u128 {
 	let (l_r, nodes, node_ids) = network;
 
 	let start_nodes = node_ids.iter()
@@ -131,13 +133,13 @@ fn steps_required_ghosts(network :&Network) -> u64 {
 		.collect::<Vec<_>>();
 
 	if do_bf {
-		return steps_required_ghosts_bf(network);
+		return steps_required_ghosts_bf(network) as u128;
 	}
 
 	println!("cycles: {cycles:?}");
 
 	let lcm_cycles = cycles.iter()
-		.map(|(_ending_offsets, _prefix_len, total_len)| *total_len)
+		.map(|(_ending_offsets, _prefix_len, total_len)| *total_len as u128)
 		.reduce(lcm)
 		.unwrap();
 
