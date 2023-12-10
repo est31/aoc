@@ -70,7 +70,7 @@ fn steps_required(network :&Network) -> u32 {
 	cnt
 }
 
-fn steps_required_ghosts(network :&Network) -> u32 {
+fn steps_required_ghosts(network :&Network) -> u64 {
 	let (l_r, nodes, node_ids) = network;
 
 	let start_nodes = node_ids.iter()
@@ -81,6 +81,7 @@ fn steps_required_ghosts(network :&Network) -> u32 {
 	let mut l_r_it = l_r.iter().cycle();
 	let mut cur_nodes = start_nodes;
 	let mut cnt = 0;
+	let mut max_end_node_count = 0;
 	loop {
 		let right = l_r_it.next().unwrap();
 		let mut end_node_count = 0;
@@ -94,6 +95,10 @@ fn steps_required_ghosts(network :&Network) -> u32 {
 			if node.0.ends_with('Z') {
 				end_node_count += 1;
 			}
+		}
+		max_end_node_count = max_end_node_count.max(end_node_count);
+		if cnt % 1_000_000 == 0 {
+			println!("after {cnt}: {end_node_count} max {max_end_node_count}");
 		}
 		if end_node_count == cur_nodes.len() {
 			return cnt;
