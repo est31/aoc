@@ -136,14 +136,16 @@ fn steps_required_ghosts(network :&Network) -> u128 {
 		return steps_required_ghosts_bf(network) as u128;
 	}
 
+	cycles.sort_by_key(|c| c.2);
+
 	println!("cycles: {cycles:?}");
 
 	let lcm_cycles = cycles.iter()
-		.map(|(_ending_offsets, _prefix_len, total_len)| *total_len as u128)
+		.map(|(ending_offsets, _prefix_len, _total_len)| ending_offsets[0] as u128)
 		.reduce(lcm)
 		.unwrap();
 
-	lcm_cycles - 1
+	lcm_cycles
 }
 
 fn steps_required_ghosts_bf(network :&Network) -> u64 {

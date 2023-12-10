@@ -63,4 +63,5 @@ fn test_gcd_lcm() {
 	assert_eq!(lcm(14, 4), 28);
 	assert_eq!(lcm(30, 105), 210);
 	assert_eq!(lcm(7, 13), 91);
+	assert_eq!(lcm(5, 10), 10);
 }
