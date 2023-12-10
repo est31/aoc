@@ -93,6 +93,8 @@ fn steps_required_ghosts(network :&Network) -> u64 {
 		.map(|(_name, id)| *id)
 		.collect::<Vec<_>>();
 
+	let mut do_bf = false;
+
 	let mut cycles = start_nodes.iter()
 		.map(|start_node| {
 			let mut l_r_it = l_r.iter().cycle().enumerate();
@@ -117,14 +119,40 @@ fn steps_required_ghosts(network :&Network) -> u64 {
 					ending_offsets.push(l_r_offs);
 				}
 			};
-			(ending_offsets, prefix_len, total_len)
+			if ending_offsets.len() != 1 {
+				do_bf = true;
+			}
+			let first = ending_offsets[0];
+			if first + prefix_len != total_len {
+				do_bf = true;
+			}
+			(ending_offsets, prefix_len as u64, total_len as u64)
 		})
 		.collect::<Vec<_>>();
 
+	if do_bf {
+		return steps_required_ghosts_bf(network);
+	}
+
 	println!("cycles: {cycles:?}");
 
-	panic!();
-	/*
+	let lcm_cycles = cycles.iter()
+		.map(|(_ending_offsets, _prefix_len, total_len)| *total_len)
+		.reduce(lcm)
+		.unwrap();
+
+	lcm_cycles - 1
+}
+
+fn steps_required_ghosts_bf(network :&Network) -> u64 {
+	let (l_r, nodes, node_ids) = network;
+
+	let start_nodes = node_ids.iter()
+		.filter(|(name, _id)| name.ends_with('A'))
+		.map(|(_name, id)| *id)
+		.collect::<Vec<_>>();
+
+	let mut l_r_it = l_r.iter().cycle();
 
 	let mut cur_nodes = start_nodes;
 	let mut cnt = 0;
@@ -152,5 +180,5 @@ fn steps_required_ghosts(network :&Network) -> u64 {
 		}
 
 		cnt += 1;
-	}*/
+	}
 }
