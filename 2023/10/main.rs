@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let field = parse(INPUT);
 	println!("farthest pos: {}", farthest(&field));
+	println!("enclosed by loop: {}", enclosed_by_loop(&field));
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Debug)]
@@ -44,15 +45,19 @@ fn parse(input :&str) -> Vec<Vec<Field>> {
 		.collect::<Vec<_>>()
 }
 
-fn farthest(field :&[Vec<Field>]) -> u32 {
-	let start_pos = field.iter()
+fn start_pos(field :&[Vec<Field>]) -> (usize, usize) {
+	field.iter()
 		.enumerate()
 		.filter_map(|(i, l)| l.iter()
 			.enumerate()
 			.find(|(_j, f)| f == &&Field::Start)
 			.map(|(j, _f)| (i, j)))
 		.next()
-		.unwrap();
+		.unwrap()
+}
+
+fn farthest(field :&[Vec<Field>]) -> u32 {
+	let start_pos = start_pos(field);
 	let no_rev = walk_from_start(field, start_pos, false);
 	let with_rev = walk_from_start(field, start_pos, true);
 	//println!("no_rev: {no_rev:?}");
@@ -138,4 +143,11 @@ fn walk_from_start(field :&[Vec<Field>], start_pos :(usize, usize), rev :bool) -
 		}
 	}
 	res
+}
+
+fn enclosed_by_loop(field :&[Vec<Field>]) -> u32 {
+	let start_pos = start_pos(&field);
+	let fields = walk_from_start(field, start_pos, false);
+
+	todo!()
 }
