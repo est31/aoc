@@ -28,10 +28,6 @@ fn run_around_pos(pos :(usize, usize), mut f: impl FnMut(usize, usize)) {
 	f(pos.0 + 1, pos.1 + 1);
 }
 
-fn part_numbers(input :&str) -> Vec<u32> {
-	pn_gr(input).0
-}
-
 fn pn_gr(input :&str) -> (Vec<u32>, Vec<u32>) {
 	let lines = input.lines()
 		.map(|l| l.trim())
