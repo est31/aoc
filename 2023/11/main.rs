@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let galaxies = parse(INPUT);
 	println!("sum shortest: {}", sum_shortest(&galaxies));
+	println!("sum shortest million: {}", sum_shortest_million(&galaxies));
 }
 
 fn parse(input :&str) -> HashSet<(u16, u16)> {
@@ -34,22 +35,31 @@ fn find_not(it :impl Iterator<Item = u16>) -> Vec<u16> {
 		.collect::<Vec<_>>()
 }
 
-fn expand_with_not(v :u16, not :&[u16]) -> u16 {
+fn expand_with_not(v :u16, not :&[u16], expansion_factor :u32) -> u64 {
+	assert!(expansion_factor > 0);
 	let prev_idx = not.binary_search(&v).unwrap_err();
-	prev_idx as u16 + v
+	prev_idx as u64 * (expansion_factor as u64 - 1) + v as u64
 }
 
-fn sum_shortest(galaxies :&HashSet<(u16, u16)>) -> u32 {
+fn sum_shortest(galaxies :&HashSet<(u16, u16)>) -> u64 {
+	sum_shortest_generic(galaxies, 2)
+}
+
+fn sum_shortest_million(galaxies :&HashSet<(u16, u16)>) -> u64 {
+	sum_shortest_generic(galaxies, 1_000_000)
+}
+
+fn sum_shortest_generic(galaxies :&HashSet<(u16, u16)>, expansion_factor :u32) -> u64 {
 	let lines_not = find_not(galaxies.iter().map(|(i, _j)| *i));
 	let cols_not = find_not(galaxies.iter().map(|(_i, j)| *j));
 
 	let mut galaxies_expanded = galaxies.iter()
 		.map(|pos| {
-			let i = expand_with_not(pos.0, &lines_not);
-			let j = expand_with_not(pos.1, &cols_not);
+			let i = expand_with_not(pos.0, &lines_not, expansion_factor);
+			let j = expand_with_not(pos.1, &cols_not, expansion_factor);
 			(i, j)
 		})
-		.map(|pos| (pos.0 as i32, pos.1 as i32))
+		.map(|pos| (pos.0 as i64, pos.1 as i64))
 		.collect::<Vec<(_, _)>>();
 	// Not really needed but if we need to do logging, this sort is helpful
 	galaxies_expanded.sort();
@@ -60,5 +70,5 @@ fn sum_shortest(galaxies :&HashSet<(u16, u16)>) -> u32 {
 			sum += l0_dist;
 		}
 	}
-	sum as u32
+	sum as u64
 }

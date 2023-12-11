@@ -17,4 +17,6 @@ const EXAMPLE_INPUT :&str = "\
 fn test_1() {
 	let galaxies = parse(EXAMPLE_INPUT);
 	assert_eq!(sum_shortest(&galaxies), 374);
+	assert_eq!(sum_shortest_generic(&galaxies, 10), 1030);
+	assert_eq!(sum_shortest_generic(&galaxies, 100), 8410);
 }
