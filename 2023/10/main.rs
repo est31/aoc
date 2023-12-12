@@ -147,7 +147,30 @@ fn walk_from_start(field :&[Vec<Field>], start_pos :(usize, usize), rev :bool) -
 
 fn enclosed_by_loop(field :&[Vec<Field>]) -> u32 {
 	let start_pos = start_pos(&field);
-	let fields = walk_from_start(field, start_pos, false);
+	let path = walk_from_start(field, start_pos, false);
 
-	todo!()
+	// Use shoelace formula (trapezoid formula)
+	let first = path.first().unwrap();
+	let last = path.last().unwrap();
+
+	let sum = path.windows(2)
+		.chain(std::iter::once([*last, *first].as_slice()))
+		.map(|w| {
+			let prev = w[0];
+			let cur = w[1];
+
+			(prev.1.0 as i32 + cur.1.0 as i32) * (prev.1.1 as i32 - cur.1.1 as i32)
+		})
+		.sum::<i32>();
+
+	let area = (sum / 2).abs();
+
+	let boundary_points = path.len() as i32;
+
+	// Pick's theorem
+	let enclosed_points = area - boundary_points / 2 + 1;
+
+	println!("area: {area}, path_len: {boundary_points}, enclosed: {enclosed_points}");
+
+	enclosed_points as u32
 }
