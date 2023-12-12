@@ -170,7 +170,7 @@ fn enclosed_by_loop(field :&[Vec<Field>]) -> u32 {
 	// Pick's theorem
 	let enclosed_points = area - boundary_points / 2 + 1;
 
-	println!("area: {area}, path_len: {boundary_points}, enclosed: {enclosed_points}");
+	//println!("area: {area}, path_len: {boundary_points}, enclosed: {enclosed_points}");
 
 	enclosed_points as u32
 }
