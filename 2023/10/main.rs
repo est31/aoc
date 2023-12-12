@@ -98,15 +98,15 @@ fn walk_from_start(field :&[Vec<Field>], start_pos :(usize, usize), rev :bool) -
 			if pos.1 > 0 && matches!(field[pos.0][pos.1 - 1], Horizontal | BendNorthEast | BendSouthEast | Start) {
 				possible_pos.push((pos.0, pos.1 - 1));
 			}
-			if pos.0 < width - 1 && matches!(field[pos.0 + 1][pos.1], Vertical | BendNorthEast | BendNorthWest | Start) {
+			if pos.0 < height - 1 && matches!(field[pos.0 + 1][pos.1], Vertical | BendNorthEast | BendNorthWest | Start) {
 				possible_pos.push((pos.0 + 1, pos.1));
 			}
-			if pos.1 < height - 1 && matches!(field[pos.0][pos.1 + 1], Horizontal | BendNorthWest | BendSouthWest | Start) {
+			if pos.1 < width - 1 && matches!(field[pos.0][pos.1 + 1], Horizontal | BendNorthWest | BendSouthWest | Start) {
 				possible_pos.push((pos.0, pos.1 + 1));
 			}
 			//println!("  -> possible: {possible_pos:?} {:?}", possible_pos.iter().map(|(p0, p1)| field[*p0][*p1]).collect::<Vec<_>>());
 
-			assert_eq!(possible_pos.len(), 2);
+			assert_eq!(possible_pos.len(), 2, "two possible positions");
 
 			if rev {
 				*possible_pos.last().unwrap()
