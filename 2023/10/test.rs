@@ -64,13 +64,19 @@ fn test_1() {
 }
 
 #[test]
-fn test_2() {
+fn test_2_3() {
 	let field = parse(EXAMPLE_INPUT_3);
 	assert_eq!(enclosed_by_loop(&field), 4);
+}
 
+#[test]
+fn test_2_4() {
 	let field = parse(EXAMPLE_INPUT_4);
 	assert_eq!(enclosed_by_loop(&field), 8);
+}
 
+#[test]
+fn test_2_5() {
 	let field = parse(EXAMPLE_INPUT_5);
 	assert_eq!(enclosed_by_loop(&field), 10);
 }
