@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 const INPUT :&str = include_str!("input");
@@ -57,57 +58,32 @@ fn pattern_to_str(pattern :&[SpringState]) -> String {
 
 fn arrangement_count_bruteforce(pattern :&[SpringState], rle :&[u16]) -> u64 {
 	let mut pattern = pattern.to_vec();
-	arrangement_count_bruteforce_inner(&mut pattern, rle, 0)
+	arrangement_count_bruteforce_inner(&mut pattern, rle, 0, &mut HashMap::new())
 }
 
-fn rle_prefix_fits(pattern :&[SpringState], rle :&[u16]) -> (bool, bool) {
-	let mut damaged_len = 0;
-	let mut ends_with_unknown = false;
-	let mut built = Vec::new();
-	for pt in pattern {
-		match pt {
-			SpringState::Operational => {
-				if damaged_len > 0 {
-					built.push(damaged_len);
-					damaged_len = 0;
-				}
-			},
-			SpringState::Damaged => {
-				damaged_len += 1;
-			},
-			SpringState::Unknown => {
-				ends_with_unknown = true;
-				break;
-			},
-		}
-	}
-
-	if damaged_len > 0 && !ends_with_unknown {
-		built.push(damaged_len);
-	}
-
-	let fits_somewhat = rle.starts_with(&built);
-
-	let fits_completely = fits_somewhat && rle.len() == built.len() && !ends_with_unknown;
-	//println!("  pattern: {} -> {:?}", pattern_to_str(pattern), res);
-	(fits_somewhat, fits_completely)
-}
-
-fn arrangement_count_bruteforce_inner(pattern :&mut [SpringState], rle :&[u16], i :usize) -> u64 {
-	if !rle_prefix_fits(pattern, rle).0 {
+fn arrangement_count_bruteforce_inner(pattern :&mut [SpringState], rle :&[u16], i :usize, hm :&mut HashMap<FitState, u64>) -> u64 {
+	let (fits_somewhat, fits_completely, fit_state) = rle_prefix_fits(pattern, rle);
+	if !fits_somewhat {
 		return 0;
+	} else if fits_completely {
+		return 1;
+	} else if let Some(cnt) = hm.get(&fit_state) {
+		return *cnt;
 	}
 	for j in i.. {
 		match pattern.get(j) {
 			Some(SpringState::Unknown) => {
 				pattern[j] = SpringState::Operational;
 				//println!("j: {j} pattern OP: {}", pattern_to_str(pattern));
-				let op_cnt = arrangement_count_bruteforce_inner(pattern, rle, j + 1);
+				let op_cnt = arrangement_count_bruteforce_inner(pattern, rle, j + 1, hm);
 				pattern[j] = SpringState::Damaged;
 				//println!("j: {j} pattern DM: {}", pattern_to_str(pattern));
-				let dmg_cnt = arrangement_count_bruteforce_inner(pattern, rle, j + 1);
+				let dmg_cnt = arrangement_count_bruteforce_inner(pattern, rle, j + 1, hm);
 				pattern[j] = SpringState::Unknown;
-				return op_cnt + dmg_cnt;
+				let res = op_cnt + dmg_cnt;
+
+				hm.insert(fit_state, res);
+				return res;
 			},
 			Some(_) => {
 				// Just advance j
@@ -119,6 +95,42 @@ fn arrangement_count_bruteforce_inner(pattern :&mut [SpringState], rle :&[u16], 
 		}
 	}
 	unreachable!();
+}
+
+type FitState = (Option<usize>, u16, usize);
+
+fn rle_prefix_fits(pattern :&[SpringState], rle :&[u16]) -> (bool, bool, FitState) {
+	let mut damaged_len = 0;
+	let mut ends_at_unknown = None;
+	let mut built = Vec::new();
+	for (i, pt) in pattern.iter().enumerate() {
+		match pt {
+			SpringState::Operational => {
+				if damaged_len > 0 {
+					built.push(damaged_len);
+					damaged_len = 0;
+				}
+			},
+			SpringState::Damaged => {
+				damaged_len += 1;
+			},
+			SpringState::Unknown => {
+				ends_at_unknown = Some(i);
+				break;
+			},
+		}
+	}
+
+	if damaged_len > 0 && ends_at_unknown.is_none() {
+		built.push(damaged_len);
+	}
+
+	let fits_somewhat = rle.starts_with(&built);
+
+	let fit_state = (ends_at_unknown, damaged_len, built.len());
+	let fits_completely = fits_somewhat && rle.len() == built.len() && ends_at_unknown.is_none();
+	//println!("  pattern: {} -> {:?}", pattern_to_str(pattern), res);
+	(fits_somewhat, fits_completely, fit_state)
 }
 
 fn fold(pattern :&[SpringState]) -> Vec<SpringState> {
@@ -151,7 +163,7 @@ fn sum_counts_folded(list :&[(Vec<SpringState>, Vec<u16>)]) -> u64 {
 	list.iter()
 		.map(|(pattern, rle)| (fold(pattern), fold_rle(rle)))
 		.map(|(pattern, rle)| {
-			println!("{}", pattern_to_str(&pattern));
+			//println!("{}", pattern_to_str(&pattern));
 			arrangement_count_bruteforce(&pattern, &rle)
 		})
 		.sum()
