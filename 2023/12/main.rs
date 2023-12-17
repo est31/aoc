@@ -7,7 +7,8 @@ mod test;
 
 fn main() {
 	let pt_rle = parse(INPUT);
-	println!("sum counts: {}", sum_arrangement_counts(&pt_rle));
+	println!("sum counts: {}", sum_counts(&pt_rle));
+	println!("sum counts (folded): {}", sum_counts_folded(&pt_rle));
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -43,6 +44,7 @@ fn parse(input :&str) -> Vec<(Vec<SpringState>, Vec<u16>)> {
 		.collect::<Vec<_>>()
 }
 
+#[allow(unused)]
 fn pattern_to_str(pattern :&[SpringState]) -> String {
 	pattern.iter()
 		.map(|st| match st {
@@ -58,14 +60,15 @@ fn arrangement_count_bruteforce(pattern :&[SpringState], rle :&[u16]) -> u64 {
 	arrangement_count_bruteforce_inner(&mut pattern, rle, 0)
 }
 
-fn determine_rle(pattern :&[SpringState]) -> Vec<u16> {
+fn rle_prefix_fits(pattern :&[SpringState], rle :&[u16]) -> (bool, bool) {
 	let mut damaged_len = 0;
-	let mut res = Vec::new();
+	let mut ends_with_unknown = false;
+	let mut built = Vec::new();
 	for pt in pattern {
 		match pt {
 			SpringState::Operational => {
 				if damaged_len > 0 {
-					res.push(damaged_len);
+					built.push(damaged_len);
 					damaged_len = 0;
 				}
 			},
@@ -73,19 +76,27 @@ fn determine_rle(pattern :&[SpringState]) -> Vec<u16> {
 				damaged_len += 1;
 			},
 			SpringState::Unknown => {
-				panic!("not supposed to find unknown at this stage");
+				ends_with_unknown = true;
+				break;
 			},
 		}
 	}
 
-	if damaged_len > 0 {
-		res.push(damaged_len);
+	if damaged_len > 0 && !ends_with_unknown {
+		built.push(damaged_len);
 	}
+
+	let fits_somewhat = rle.starts_with(&built);
+
+	let fits_completely = fits_somewhat && rle.len() == built.len() && !ends_with_unknown;
 	//println!("  pattern: {} -> {:?}", pattern_to_str(pattern), res);
-	res
+	(fits_somewhat, fits_completely)
 }
 
 fn arrangement_count_bruteforce_inner(pattern :&mut [SpringState], rle :&[u16], i :usize) -> u64 {
+	if !rle_prefix_fits(pattern, rle).0 {
+		return 0;
+	}
 	for j in i.. {
 		match pattern.get(j) {
 			Some(SpringState::Unknown) => {
@@ -103,16 +114,42 @@ fn arrangement_count_bruteforce_inner(pattern :&mut [SpringState], rle :&[u16], 
 			},
 			None => {
 				// Final case, determine rle and compare
-				let rle_given = determine_rle(pattern);
-				return (rle == rle_given) as u64;
+				return rle_prefix_fits(pattern, rle).1 as u64;
 			},
 		}
 	}
 	unreachable!();
 }
 
-fn sum_arrangement_counts(list :&[(Vec<SpringState>, Vec<u16>)]) -> u64 {
+fn fold(pattern :&[SpringState]) -> Vec<SpringState> {
+	let it = pattern.iter()
+		.map(|pat| *pat)
+		.chain(std::iter::once(SpringState::Unknown));
+	std::iter::repeat(it)
+		.take(4)
+		.flatten()
+		.chain(pattern.iter().map(|p| *p))
+		.collect::<Vec<_>>()
+}
+
+fn fold_rle(pattern :&[u16]) -> Vec<u16> {
+	let it = pattern.iter()
+		.map(|pat| *pat);
+	std::iter::repeat(it)
+		.take(5)
+		.flatten()
+		.collect::<Vec<_>>()
+}
+
+fn sum_counts(list :&[(Vec<SpringState>, Vec<u16>)]) -> u64 {
 	list.iter()
 		.map(|(pattern, rle)| { arrangement_count_bruteforce(pattern, rle) })
+		.sum()
+}
+
+fn sum_counts_folded(list :&[(Vec<SpringState>, Vec<u16>)]) -> u64 {
+	list.iter()
+		.map(|(pattern, rle)| (fold(pattern), fold_rle(rle)))
+		.map(|(pattern, rle)| { arrangement_count_bruteforce(&pattern, &rle) })
 		.sum()
 }
