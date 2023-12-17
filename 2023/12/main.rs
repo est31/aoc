@@ -150,6 +150,9 @@ fn sum_counts(list :&[(Vec<SpringState>, Vec<u16>)]) -> u64 {
 fn sum_counts_folded(list :&[(Vec<SpringState>, Vec<u16>)]) -> u64 {
 	list.iter()
 		.map(|(pattern, rle)| (fold(pattern), fold_rle(rle)))
-		.map(|(pattern, rle)| { arrangement_count_bruteforce(&pattern, &rle) })
+		.map(|(pattern, rle)| {
+			println!("{}", pattern_to_str(&pattern));
+			arrangement_count_bruteforce(&pattern, &rle)
+		})
 		.sum()
 }
