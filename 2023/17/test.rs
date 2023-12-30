@@ -1,6 +1,6 @@
 use super::*;
 
-const EXAMPLE_INPUT :&str = "\
+const EXAMPLE_INPUT_1 :&str = "\
 2413432311323
 3215453535623
 3255245654254
@@ -16,8 +16,23 @@ const EXAMPLE_INPUT :&str = "\
 4322674655533
 ";
 
+const EXAMPLE_INPUT_2 :&str = "\
+111111111111
+999999999991
+999999999991
+999999999991
+999999999991
+";
+
 #[test]
 fn test_1() {
-	let field = parse(EXAMPLE_INPUT);
+	let field = parse(EXAMPLE_INPUT_1);
 	assert_eq!(heat_loss(&field), 102);
+	assert_eq!(heat_loss_ultra(&field), 94);
+}
+
+#[test]
+fn test_2() {
+	let field = parse(EXAMPLE_INPUT_2);
+	assert_eq!(heat_loss_ultra(&field), 71);
 }

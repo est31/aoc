@@ -10,6 +10,7 @@ mod test;
 fn main() {
 	let field = parse(INPUT);
 	println!("heat loss: {}", heat_loss(&field));
+	println!("heat loss ultra: {}", heat_loss_ultra(&field));
 }
 
 fn parse(input :&str) -> Vec<Vec<u8>> {
@@ -45,6 +46,14 @@ impl Direction {
 }
 
 fn heat_loss(field :&[Vec<u8>]) -> u32 {
+	heat_loss_generic(field, 0, 3)
+}
+
+fn heat_loss_ultra(field :&[Vec<u8>]) -> u32 {
+	heat_loss_generic(field, 3, 10)
+}
+
+fn heat_loss_generic(field :&[Vec<u8>], min_walk_add :usize, max_walk :usize) -> u32 {
 	// bases on copy of 2021/15 dijkstra
 	let mut visited = HashMap::<_, usize>::new();
 	let mut min_heap = BinaryHeap::new();
@@ -63,45 +72,72 @@ fn heat_loss(field :&[Vec<u8>]) -> u32 {
 	while let Some((Reverse(cost), (x, y), last_directions)) = min_heap.pop() {
 		//println!("cost: {cost}, pos: ({x}, {y}), ld: {last_directions:?}");
 		macro_rules! neigh {
-			($n_x:expr, $n_y:expr, $dir:expr) => {
-				let vis = visited.get(&(($n_x, $n_y), $dir));
-				let new_directions = if last_directions.0 == $dir {
-					($dir, last_directions.1 + 1)
-				} else {
-					($dir, 1)
-				};
-				let not_opposite = !last_directions.0.is_opposite($dir);
-				let vis = if let Some(l) = vis {
-					// Been visited in that direction before
-					l <= &new_directions.1
-				} else {
-					// Not been visited in that direction before
-					false
-				};
-				// Remember: None (not visited yet in that direction) is
-				if not_opposite && new_directions.1 <= 3 && !vis {
-					visited.insert((($n_x, $n_y), $dir), new_directions.1);
-					let cost_add = field[$n_y][$n_x];
-					let n_cost = cost + cost_add as u32;
-					// Seach concluded
-					if ($n_x, $n_y) == goal {
-						return n_cost;
+			($diff:expr, $x_diff:expr, $y_diff:expr, $dir:expr, $only_same_dir:expr) => {
+				let mut n_x = x as isize;
+				let mut n_y = y as isize;
+				let mut n_cost = cost;
+				for _d in 0..$diff {
+					n_x += $x_diff;
+					n_y += $y_diff;
+					let n_x = n_x as usize;
+					let n_y = n_y as usize;
+					let vis = visited.get(&((n_x, n_y), $dir));
+					let new_directions = if last_directions.0 == $dir {
+						($dir, last_directions.1 + 1)
+					} else {
+						($dir, 1)
+					};
+					let dir_allowed = if $only_same_dir {
+						last_directions.0 == $dir
+					} else {
+						let not_opposite = !last_directions.0.is_opposite($dir);
+						not_opposite
+					};
+					let vis = if let Some(l) = vis {
+						// Been visited in that direction before
+						if min_walk_add == 0 || $only_same_dir {
+							l <= &new_directions.1
+						} else {
+							l == &new_directions.1
+						}
+					} else {
+						// Not been visited in that direction before
+						false
+					};
+					if dir_allowed && new_directions.1 <= max_walk && !vis {
+						visited.insert(((n_x, n_y), $dir), new_directions.1);
+						let cost_add = field[n_y][n_x];
+						n_cost += cost_add as u32;
+						// Seach concluded
+						if (n_x, n_y) == goal {
+							return n_cost;
+						}
+						min_heap.push((Reverse(n_cost), (n_x, n_y), new_directions));
 					}
-					min_heap.push((Reverse(n_cost), ($n_x, $n_y), new_directions));
 				}
 			};
 		}
-		if x > 0 {
-			neigh!(x - 1, y, Direction::Left);
+		macro_rules! neighs {
+			($dist:expr, $only_same_dir:expr) => {
+				if x >= $dist {
+					neigh!($dist, -1, 0, Direction::Left, $only_same_dir);
+				}
+				if x < width - $dist {
+					neigh!($dist, 1, 0, Direction::Right, $only_same_dir);
+				}
+				if y >= $dist {
+					neigh!($dist, 0, -1, Direction::Up, $only_same_dir);
+				}
+				if y < height - $dist {
+					neigh!($dist, 0, 1, Direction::Down, $only_same_dir);
+				}
+			};
 		}
-		if x < width - 1 {
-			neigh!(x + 1, y, Direction::Right);
-		}
-		if y > 0 {
-			neigh!(x, y - 1, Direction::Up);
-		}
-		if y < height - 1 {
-			neigh!(x, y + 1, Direction::Down);
+		if min_walk_add == 0 {
+			neighs!(1, false);
+		} else {
+			neighs!(1, true);
+			neighs!(1 + min_walk_add, false);
 		}
 	}
 
