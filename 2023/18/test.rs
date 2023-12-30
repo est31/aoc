@@ -22,6 +22,7 @@ fn test_1() {
 	let dig_plan = parse(EXAMPLE_INPUT);
 	println!("{dig_plan:?}");
 	assert_eq!(lava_cubes(&dig_plan), 62);
+	assert_eq!(lava_cubes_hex(&dig_plan), 952408144115);
 }
 
 const EXAMPLE_INPUT_2 :&str = "\
