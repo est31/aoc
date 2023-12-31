@@ -21,9 +21,18 @@ hdj{m>838:A,pv}
 ";
 
 #[test]
-fn test_1() {
+fn test_1_1() {
 	let (in_, workflows, parts) = parse(EXAMPLE_INPUT);
 	println!("{workflows:?}");
 	println!("{parts:?}");
 	assert_eq!(rating_sum(in_, &workflows, &parts), 19114);
+}
+
+#[test]
+fn test_1_2() {
+	let (in_, workflows, parts) = parse(EXAMPLE_INPUT);
+	println!("{workflows:?}");
+	println!("{parts:?}");
+	assert_eq!(ratings_nums_accepted_slow(in_, &workflows), 167409079868000);
+	assert_eq!(ratings_nums_accepted(in_, &workflows), 167409079868000);
 }

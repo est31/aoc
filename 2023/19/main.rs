@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const INPUT :&str = include_str!("input");
 
@@ -9,6 +9,7 @@ mod test;
 fn main() {
 	let (in_, workflows, parts) = parse(INPUT);
 	println!("rating sum: {}", rating_sum(in_, &workflows, &parts));
+	println!("number of accepted ratings: {}", ratings_nums_accepted(in_, &workflows));
 }
 
 fn parse(input :&str) -> (usize, Vec<Workflow>, Vec<Part>) {
@@ -167,4 +168,54 @@ fn rating_sum(in_ :usize, workflows :&[Workflow], parts :&[Part]) -> u32 {
 	parts.iter()
 		.map(|p| rating(in_, workflows, p))
 		.sum::<u32>()
+}
+
+fn ratings_nums_accepted(in_ :usize, workflows :&[Workflow]) -> u64 {
+	ratings_nums_accepted_slow(in_, workflows)
+}
+
+fn ratings_nums_accepted_slow(in_ :usize, workflows :&[Workflow]) -> u64 {
+	let total_nums = workflows.iter()
+		.map(|wf| wf.rules.iter())
+		.flatten()
+		.filter_map(|rule|
+			if let Rule::Check { limit, lower_check, .. } = rule {
+				Some(if *lower_check {
+					[*limit - 1, *limit].into_iter()
+				} else {
+					[*limit, *limit + 1].into_iter()
+				})
+			} else {
+				None
+			}
+		)
+		.flatten()
+		.chain([1, 4000 + 1].into_iter())
+		.collect::<HashSet<u32>>();
+	//println!("{}", total_nums.len());
+	let mut total_nums = total_nums.into_iter()
+		.collect::<Vec<u32>>();
+	total_nums.sort();
+	let mut sum = 0;
+	for inv in total_nums.windows(2) {
+		let (xst, xhg) = (inv[0], inv[1] - 1);
+		for inv in total_nums.windows(2) {
+			let (mst, mhg) = (inv[0], inv[1] - 1);
+			for inv in total_nums.windows(2) {
+				let (ast, ahg) = (inv[0], inv[1] - 1);
+				for inv in total_nums.windows(2) {
+					let (sst, shg) = (inv[0], inv[1] - 1);
+					let st = Part { x : xst, m : mst, a : ast, s : sst, };
+					let hg = Part { x : xhg, m : mhg, a : ahg, s : shg, };
+					if rating(in_, workflows, &st) > 0 && rating(in_, workflows, &hg) > 0 {
+						let add = (xhg - xst + 1) as u64 * (mhg - mst + 1) as u64 *
+							(ahg - ast + 1) as u64 * (shg - sst + 1) as u64;
+						sum += add;
+					}
+				}
+			}
+		}
+	}
+
+	sum
 }
