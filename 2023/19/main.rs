@@ -33,8 +33,8 @@ fn parse(input :&str) -> (usize, Vec<Workflow>, Vec<Part>) {
 	let in_ = hm.get("in").unwrap();
 	for wf in workflows.iter_mut() {
 		for rule in wf.rules.iter_mut() {
-			if let Rule::Workflow { name: (name_str, name_idx) } |
-					Rule::Check { name: (name_str, name_idx), .. } = rule {
+			if let Rule::NameOrEnd(NameOrEnd::Name(name_str, name_idx)) |
+					Rule::Check { name: NameOrEnd::Name(name_str, name_idx), .. } = rule {
 				if let Some(idx) = hm.get(name_str) {
 					*name_idx = Some(*idx);
 				}
@@ -47,11 +47,31 @@ fn parse(input :&str) -> (usize, Vec<Workflow>, Vec<Part>) {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-enum Rule {
-	Check { category :char, lower_check :bool, limit :u32, name :(String, Option<usize>), },
-	Workflow { name :(String, Option<usize>) },
+enum NameOrEnd {
+	Name(String, Option<usize>),
 	Accept,
 	Reject,
+}
+
+impl NameOrEnd {
+	fn parse(name_or_end :&str) -> Option<Self> {
+		if name_or_end == "A" {
+			return Some(NameOrEnd::Accept);
+		}
+		if name_or_end == "R" {
+			return Some(NameOrEnd::Reject);
+		}
+		if !name_or_end.contains(':') {
+			return Some(NameOrEnd::Name(name_or_end.to_string(), None));
+		}
+		None
+	}
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum Rule {
+	Check { category :char, lower_check :bool, limit :u32, name :NameOrEnd, },
+	NameOrEnd(NameOrEnd),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -62,14 +82,8 @@ struct Workflow {
 
 impl Rule {
 	fn parse(rule :&str) -> Self {
-		if rule == "A" {
-			return Rule::Accept;
-		}
-		if rule == "R" {
-			return Rule::Reject;
-		}
-		if !rule.contains(':') {
-			return Rule::Workflow { name :(rule.to_string(), None) };
+		if let Some(noe) = NameOrEnd::parse(rule) {
+			return Rule::NameOrEnd(noe);
 		}
 		let lower_check = rule.contains('<');
 		let mut parts = rule.split(['<', '>', ':']);
@@ -77,8 +91,9 @@ impl Rule {
 		let category = category_str.chars().next().unwrap();
 		let limit_str = parts.next().unwrap();
 		let limit = u32::from_str(limit_str).unwrap();
-		let name = parts.next().unwrap().to_owned();
-		Rule::Check { category, lower_check, limit, name: (name, None), }
+		let name = parts.next().unwrap();
+		let name = NameOrEnd::parse(name).unwrap();
+		Rule::Check { category, lower_check, limit, name, }
 	}
 
 }
@@ -115,13 +130,8 @@ fn rating(start_workflow :usize, workflows :&[Workflow], part :&Part) -> u32 {
 	loop {
 		//println!("cur is {cur:?}");
 		for rule in cur.rules.iter() {
-			match rule {
-				Rule::Accept => return part.rating(),
-				Rule::Reject => return 0,
-				Rule::Workflow { name } => {
-					cur = &workflows[name.1.unwrap()];
-					break;
-				},
+			let noe = match rule {
+				Rule::NameOrEnd(noe) => noe,
 				Rule::Check { category, lower_check, limit, name } => {
 					let rating = match category {
 						'x' => part.x,
@@ -135,17 +145,18 @@ fn rating(start_workflow :usize, workflows :&[Workflow], part :&Part) -> u32 {
 					} else {
 						rating > *limit
 					};
-					if do_jump {
-						if name.0 == "A" {
-							return part.rating();
-						}
-						if name.0 == "R" {
-							return 0;
-						}
-						//println!("  doing the jump to {name:?}");
-						cur = &workflows[name.1.unwrap()];
-						break;
+					if !do_jump {
+						continue;
 					}
+					name
+				},
+			};
+			match noe {
+				NameOrEnd::Accept => return part.rating(),
+				NameOrEnd::Reject => return 0,
+				NameOrEnd::Name(_name_str, name_idx) => {
+					cur = &workflows[name_idx.unwrap()];
+					break;
 				},
 			}
 		}
