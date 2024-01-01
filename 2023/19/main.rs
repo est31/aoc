@@ -174,36 +174,56 @@ fn ratings_nums_accepted(in_ :usize, workflows :&[Workflow]) -> u64 {
 	ratings_nums_accepted_slow(in_, workflows)
 }
 
+fn category_to_idx(category :char) -> usize {
+	match category {
+		'x' => 0,
+		'm' => 1,
+		'a' => 2,
+		's' => 3,
+		_ => panic!("invalid category '{category}'"),
+	}
+}
+
 fn ratings_nums_accepted_slow(in_ :usize, workflows :&[Workflow]) -> u64 {
-	let total_nums = workflows.iter()
-		.map(|wf| wf.rules.iter())
-		.flatten()
-		.filter_map(|rule|
-			if let Rule::Check { limit, lower_check, .. } = rule {
-				Some(if *lower_check {
-					[*limit - 1, *limit].into_iter()
+	let mut total_nums :[HashSet<u32>; 4] = core::array::from_fn(|_| HashSet::new());
+	for tn in total_nums.iter_mut() {
+		tn.insert(1);
+		tn.insert(4000 + 1);
+	}
+	for wf in workflows.iter() {
+		for rule in wf.rules.iter() {
+			if let Rule::Check { limit, lower_check, category, .. } = rule {
+				let idx = category_to_idx(*category);
+				let [l0, l1] = if *lower_check {
+					[*limit - 1, *limit]
 				} else {
-					[*limit, *limit + 1].into_iter()
-				})
-			} else {
-				None
+					[*limit, *limit + 1]
+				};
+				total_nums[idx].insert(l0);
+				total_nums[idx].insert(l1);
 			}
-		)
-		.flatten()
-		.chain([1, 4000 + 1].into_iter())
-		.collect::<HashSet<u32>>();
+		}
+	}
 	//println!("{}", total_nums.len());
-	let mut total_nums = total_nums.into_iter()
-		.collect::<Vec<u32>>();
-	total_nums.sort();
+	for tn in total_nums.iter_mut() {
+		tn.insert(1);
+		tn.insert(4000 + 1);
+		println!("{}", tn.len());
+	}
+	let total_nums = total_nums.map(|tn| {
+		let mut tn = tn.into_iter()
+			.collect::<Vec<u32>>();
+		tn.sort();
+		tn
+	});
 	let mut sum = 0;
-	for inv in total_nums.windows(2) {
+	for inv in total_nums[0].windows(2) {
 		let (xst, xhg) = (inv[0], inv[1] - 1);
-		for inv in total_nums.windows(2) {
+		for inv in total_nums[1].windows(2) {
 			let (mst, mhg) = (inv[0], inv[1] - 1);
-			for inv in total_nums.windows(2) {
+			for inv in total_nums[2].windows(2) {
 				let (ast, ahg) = (inv[0], inv[1] - 1);
-				for inv in total_nums.windows(2) {
+				for inv in total_nums[3].windows(2) {
 					let (sst, shg) = (inv[0], inv[1] - 1);
 					let st = Part { x : xst, m : mst, a : ast, s : sst, };
 					let hg = Part { x : xhg, m : mhg, a : ahg, s : shg, };
