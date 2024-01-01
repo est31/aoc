@@ -42,57 +42,44 @@ fn lines_equal(pattern :&[Vec<bool>], li :usize, lj :usize) -> bool {
 	pattern[li] == pattern[lj]
 }
 
+fn search(pattern :&[Vec<bool>], limit :usize, check_fn :fn(&[Vec<bool>], usize, usize) -> bool) -> Option<usize> {
+	for i in 1..limit {
+		if check_fn(pattern, i, i - 1) {
+			let mut ex = 1;
+			let found_mirror = loop {
+				let ix = i + ex;
+				let Some(jx) = (i - 1).checked_sub(ex) else {
+					break true
+				};
+				if ix >= limit {
+					break true;
+				}
+				if !check_fn(pattern, ix, jx) {
+					break false;
+				}
+				ex += 1;
+			};
+			if found_mirror {
+				return Some(i);
+			}
+		}
+	}
+	None
+}
+
 fn summarize_notes(patterns :&[Vec<Vec<bool>>]) -> u32 {
 	let mut sum = 0;
-	'outer: for pattern in patterns {
-		// Find matching column (if there is any)
+	for pattern in patterns {
 		let width = pattern[0].len();
-		for ci in 1..width {
-			if columns_equal(pattern, ci, ci - 1) {
-				let mut ex = 1;
-				let found_mirror = loop {
-					let cix = ci + ex;
-					let Some(cjx) = (ci - 1).checked_sub(ex) else {
-						break true
-					};
-					if cix >= width {
-						break true;
-					}
-					if !columns_equal(pattern, cix, cjx) {
-						break false;
-					}
-					ex += 1;
-				};
-				if found_mirror {
-					sum += ci;
-					continue 'outer;
-				}
-			}
+		if let Some(i) = search(pattern, width, columns_equal) {
+			sum += i;
+			continue;
 		}
 		let height = pattern.len();
-		for i in 1..height {
-			if lines_equal(pattern, i, i - 1) {
-				let mut ex = 1;
-				let found_mirror = loop {
-					let ix = i + ex;
-					let Some(jx) = (i - 1).checked_sub(ex) else {
-						break true
-					};
-					if ix >= height {
-						break true;
-					}
-					if !lines_equal(pattern, ix, jx) {
-						break false;
-					}
-					ex += 1;
-				};
-				if found_mirror {
-					sum += i * 100;
-					continue 'outer;
-				}
-			}
+		if let Some(i) = search(pattern, height, lines_equal) {
+			sum += i * 100;
+			continue;
 		}
-
 	}
 	sum as u32
 }
