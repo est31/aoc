@@ -193,25 +193,6 @@ fn ranges_volume(ranges :&[RangeInclusive<u32>; 4]) -> u64 {
 	volume
 }
 
-fn ranges_overlap_volume(range_1 :&[RangeInclusive<u32>; 4], range_2 :&[RangeInclusive<u32>; 4]) -> u64 {
-	let volume = range_1.iter()
-		.zip(range_2.iter())
-		.map(|(r1, r2)| {
-			let start = *r1.start().max(r2.start());
-			let end = *r1.end().min(r2.end());
-			if end < start {
-				0
-			} else {
-				(end + 1 - start) as u64
-			}
-		})
-		.product::<u64>();
-	if volume > 0 {
-		println!("overlap found for {range_1:?} and {range_2:?} = {volume}");
-	}
-	volume
-}
-
 fn ratings_nums_accepted_fast(in_ :usize, workflows :&[Workflow]) -> u64 {
 	let mut possible_paths = Vec::new();
 	let mut list = Vec::new();
@@ -258,21 +239,7 @@ fn ratings_nums_accepted_fast(in_ :usize, workflows :&[Workflow]) -> u64 {
 	let volume_sum = possible_paths.iter()
 		.map(ranges_volume)
 		.sum::<u64>();
-	let intersection_sum = possible_paths.iter()
-		.enumerate()
-		.map(|(i, p1)| {
-			if i + 1 == possible_paths.len() {
-				0
-			} else {
-				possible_paths[i + 1..].iter()
-					.map(|p2| ranges_overlap_volume(p1, p2))
-					.sum::<u64>()
-			}
-		})
-		.sum::<u64>();
-	assert_eq!(intersection_sum, 0);
 	//println!("volume_sum =       {volume_sum}");
-	//println!("intersection_sum = {intersection_sum}");
 	volume_sum
 }
 
