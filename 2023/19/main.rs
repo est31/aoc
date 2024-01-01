@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::ops::RangeInclusive;
 use std::collections::{HashMap, HashSet};
 
 const INPUT :&str = include_str!("input");
@@ -171,7 +172,7 @@ fn rating_sum(in_ :usize, workflows :&[Workflow], parts :&[Part]) -> u32 {
 }
 
 fn ratings_nums_accepted(in_ :usize, workflows :&[Workflow]) -> u64 {
-	ratings_nums_accepted_slow(in_, workflows)
+	ratings_nums_accepted_fast(in_, workflows)
 }
 
 fn category_to_idx(category :char) -> usize {
@@ -184,6 +185,98 @@ fn category_to_idx(category :char) -> usize {
 	}
 }
 
+fn ranges_volume(ranges :&[RangeInclusive<u32>; 4]) -> u64 {
+	let volume = ranges.iter()
+		.map(|r| (*r.end() + 1 - *r.start()) as u64)
+		.product();
+	//println!("volume: {volume}");
+	volume
+}
+
+fn ranges_overlap_volume(range_1 :&[RangeInclusive<u32>; 4], range_2 :&[RangeInclusive<u32>; 4]) -> u64 {
+	let volume = range_1.iter()
+		.zip(range_2.iter())
+		.map(|(r1, r2)| {
+			let start = *r1.start().max(r2.start());
+			let end = *r1.end().min(r2.end());
+			if end < start {
+				0
+			} else {
+				(end + 1 - start) as u64
+			}
+		})
+		.product::<u64>();
+	if volume > 0 {
+		println!("overlap found for {range_1:?} and {range_2:?} = {volume}");
+	}
+	volume
+}
+
+fn ratings_nums_accepted_fast(in_ :usize, workflows :&[Workflow]) -> u64 {
+	let mut possible_paths = Vec::new();
+	let mut list = Vec::new();
+	list.push((in_, 0, [1..=4000, 1..=4000, 1..=4000, 1..=4000]));
+	while let Some((wf_idx, rule_idx, ranges)) = list.pop() {
+		let workflow = &workflows[wf_idx];
+		let rule = &workflow.rules[rule_idx];
+		let (noe, new_ranges) = match rule {
+			Rule::Check { category, lower_check, limit, name } => {
+				let idx = category_to_idx(*category);
+				let mut ranges_succ = ranges.clone();
+				let mut ranges_fail = ranges.clone();
+				let start = *ranges[idx].start();
+				let end = *ranges[idx].end();
+				if *lower_check {
+					ranges_succ[idx] = start ..= end.min(limit - 1);
+					ranges_fail[idx] = start.max(*limit) ..= end;
+				} else {
+					ranges_succ[idx] = start.max(limit + 1) ..= end;
+					ranges_fail[idx] = start ..= end.min(*limit);
+				}
+				if !ranges_fail[idx].is_empty() {
+					list.push((wf_idx, rule_idx + 1, ranges_fail));
+				}
+				if ranges_succ[idx].is_empty() {
+					continue;
+				}
+				(name, ranges_succ)
+			},
+			Rule::NameOrEnd(noe) => (noe, ranges.clone()),
+		};
+		match noe {
+			NameOrEnd::Accept => {
+				possible_paths.push(new_ranges);
+			},
+			NameOrEnd::Reject => (),
+			NameOrEnd::Name(_name_str, name_idx) => {
+				list.push((name_idx.unwrap(), 0, new_ranges));
+			},
+		}
+	}
+	//println!("possible_paths = {possible_paths:?}");
+	//println!("possible_paths.len() = {}", possible_paths.len());
+	let volume_sum = possible_paths.iter()
+		.map(ranges_volume)
+		.sum::<u64>();
+	let intersection_sum = possible_paths.iter()
+		.enumerate()
+		.map(|(i, p1)| {
+			if i + 1 == possible_paths.len() {
+				0
+			} else {
+				possible_paths[i + 1..].iter()
+					.map(|p2| ranges_overlap_volume(p1, p2))
+					.sum::<u64>()
+			}
+		})
+		.sum::<u64>();
+	assert_eq!(intersection_sum, 0);
+	//println!("volume_sum =       {volume_sum}");
+	//println!("intersection_sum = {intersection_sum}");
+	volume_sum
+}
+
+#[allow(dead_code)]
 fn ratings_nums_accepted_slow(in_ :usize, workflows :&[Workflow]) -> u64 {
 	let mut total_nums :[HashSet<u32>; 4] = core::array::from_fn(|_| HashSet::new());
 	for tn in total_nums.iter_mut() {
