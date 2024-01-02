@@ -42,9 +42,9 @@ fn parse(input :&str) -> (HashSet<(usize, usize)>, HashSet<(usize, usize)>, (usi
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Direction {
 	North,
-	West(usize),
+	West,
 	South(usize),
-	East,
+	East(usize),
 }
 
 impl Direction {
@@ -55,20 +55,20 @@ impl Direction {
 			} else {
 				Some((x, y - 1))
 			},
-			Direction::West(width) => if x == width - 1 {
+			Direction::West => if x == 0 {
 				None
 			} else {
-				Some((x + 1, y))
+				Some((x - 1, y))
 			},
 			Direction::South(height) => if y == height - 1 {
 				None
 			} else {
 				Some((x, y + 1))
 			},
-			Direction::East => if x == 0 {
+			Direction::East(width) => if x == width - 1 {
 				None
 			} else {
-				Some((x - 1, y))
+				Some((x + 1, y))
 			},
 		}
 	}
@@ -113,24 +113,27 @@ fn total_load_tilted(round_rocks :&HashSet<(usize, usize)>, cube_rocks :&HashSet
 	total_load(&round_rocks, height)
 }
 
-fn total_load_circles(round_rocks :&HashSet<(usize, usize)>, cube_rocks :&HashSet<(usize, usize)>, h_w :(usize, usize)) -> u32 {
-	// 1. tilt in all four directions, many times
+fn advance_n(round_rocks :&mut HashSet<(usize, usize)>, cube_rocks :&HashSet<(usize, usize)>, h_w :(usize, usize), count :u64) {
 	let dirs = [
 		Direction::North,
-		Direction::West(h_w.1),
+		Direction::West,
 		Direction::South(h_w.0),
-		Direction::East,
+		Direction::East(h_w.1),
 	];
-	let mut round_rocks = round_rocks.clone();
 	let adv = |round_rocks :&mut _| {
+		//println!("adv");
 		for dir in dirs {
+			//println!("    -> tilt {dir:?}");
 			tilt(round_rocks, cube_rocks, dir);
 		}
 	};
 	let mut seen = HashMap::new();
 	let mut idx = 0;
 	let (loop_st, loop_end) = loop {
-		adv(&mut round_rocks);
+		if idx >= count {
+			return;
+		}
+		adv(round_rocks);
 		let mut rocks_list = round_rocks.iter().cloned().collect::<Vec<_>>();
 		rocks_list.sort();
 		if let Some(prev) = seen.insert(rocks_list, idx) {
@@ -140,12 +143,18 @@ fn total_load_circles(round_rocks :&HashSet<(usize, usize)>, cube_rocks :&HashSe
 		//println!("idx: {idx}");
 	};
 	let loop_size = loop_end - loop_st;
-	const TARGET :u64 = 1_000_000_000;
-	let remaining = (TARGET - loop_end) % loop_size;
-	println!("found loop. loop_size = {loop_size}, loop_end = {loop_end}, loop_st = {loop_st}, remaining = {remaining}");
+	let remaining = (count - loop_end - 1) % loop_size;
+	//println!("found loop. loop_size = {loop_size}, loop_end = {loop_end}, loop_st = {loop_st}, remaining = {remaining}");
 	for _ in 0..remaining {
-		adv(&mut round_rocks);
+		adv(round_rocks);
 	}
+}
+
+fn total_load_circles(round_rocks :&HashSet<(usize, usize)>, cube_rocks :&HashSet<(usize, usize)>, h_w :(usize, usize)) -> u32 {
+	// 1. tilt in all four directions, many times
+	let mut round_rocks = round_rocks.clone();
+	const TARGET :u64 = 1_000_000_000;
+	advance_n(&mut round_rocks, cube_rocks, h_w, TARGET);
 
 	// 2. compute total load
 	total_load(&round_rocks, h_w.0)
