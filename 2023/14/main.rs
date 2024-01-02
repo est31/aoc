@@ -36,8 +36,7 @@ fn parse(input :&str) -> (HashSet<(usize, usize)>, HashSet<(usize, usize)>, usiz
 	(round_rocks, cube_rocks, height)
 }
 
-fn total_load_tilted(round_rocks :&HashSet<(usize, usize)>, cube_rocks :&HashSet<(usize, usize)>, height :usize) -> u32 {
-	// 1. tilt
+fn tilt(round_rocks :&HashSet<(usize, usize)>, cube_rocks :&HashSet<(usize, usize)>) -> HashSet<(usize, usize)> {
 	let mut round_rocks = round_rocks.clone();
 	loop {
 		let mut movement = false;
@@ -62,8 +61,18 @@ fn total_load_tilted(round_rocks :&HashSet<(usize, usize)>, cube_rocks :&HashSet
 			break;
 		}
 	}
-	// 2. compute total load
+	round_rocks
+}
+
+fn total_load(round_rocks :&HashSet<(usize, usize)>, height :usize) -> u32 {
 	round_rocks.iter()
 		.map(|(_r_x, r_y)| (height - r_y) as u32)
 		.sum::<u32>()
+}
+
+fn total_load_tilted(round_rocks :&HashSet<(usize, usize)>, cube_rocks :&HashSet<(usize, usize)>, height :usize) -> u32 {
+	// 1. tilt
+	let round_rocks = tilt(round_rocks, cube_rocks);
+	// 2. compute total load
+	total_load(&round_rocks, height)
 }
