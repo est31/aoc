@@ -77,7 +77,7 @@ impl Direction {
 fn tilt(round_rocks :&mut HashSet<(usize, usize)>, cube_rocks :&HashSet<(usize, usize)>, dir :Direction) {
 	loop {
 		let mut movement = false;
-		let mut new_round_rocks = HashSet::new();
+		let mut new_round_rocks = HashSet::with_capacity(round_rocks.len());
 		for rock_pos in round_rocks.iter() {
 			let Some(new_pos) = dir.new_pos(rock_pos.0, rock_pos.1) else {
 				new_round_rocks.insert(*rock_pos);
