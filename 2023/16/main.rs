@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let field = parse(INPUT);
 	println!("energized count: {}", energized_count(&field));
+	println!("energized count from anywhere: {}", energized_count_from_anywhere(&field));
 }
 
 fn parse(input :&str) -> Vec<Vec<char>> {
@@ -58,6 +59,32 @@ impl Direction {
 }
 
 fn energized_count(field :&[Vec<char>]) -> u32 {
+	let p = (0, 0);
+	let dir = Direction::Right;
+	energized_count_from(field, p, dir)
+}
+
+fn energized_count_from_anywhere(field :&[Vec<char>]) -> u32 {
+	let height = field.len();
+	let width = field[0].len();
+	let approaches: [(_, fn(usize, usize, usize) -> (usize, usize), _); 4] = [
+		(0..height, |v, _h, _w| (0, v), Direction::Right),
+		(0..height, |v, _h, width| (width - 1, v), Direction::Left),
+		(0..width, |v, _h, _w| (v, 0), Direction::Down),
+		(0..width, |v, height, _w| (v, height - 1), Direction::Up),
+	];
+	let mut max = None;
+	for (range, fun, dir) in approaches {
+		for v in range {
+			let pos = fun(v, height, width);
+			let cnt = energized_count_from(field, pos, dir);
+			max = max.max(Some(cnt));
+		}
+	}
+	max.unwrap()
+}
+
+fn energized_count_from(field :&[Vec<char>], p :(usize, usize), dir :Direction) -> u32 {
 	use Direction as Dir;
 	let height = field.len();
 	let width = field[0].len();
@@ -65,7 +92,7 @@ fn energized_count(field :&[Vec<char>]) -> u32 {
 	let mut energized = vec![vec![false; width]; height];
 	let mut explored = HashSet::new();
 	let mut unexplored = Vec::new();
-	unexplored.push(((0, 0), Direction::Right));
+	unexplored.push((p, dir));
 	while let Some((p, dir)) = unexplored.pop() {
 		if !explored.insert((p, dir)) {
 			// Already explored
