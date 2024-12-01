@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::collections::HashMap;
 
 const INPUT :&str = include_str!("input");
 
@@ -8,6 +9,7 @@ mod test;
 fn main() {
 	let (left, right) = parse_vecs(INPUT);
 	println!("sum of diffs: {}", sum_of_diffs(&left, &right));
+	println!("simliarity score: {}", similarity_score(&left, &right));
 }
 
 fn parse_vecs(s: &str) -> (Vec<u32>, Vec<u32>) {
@@ -32,6 +34,21 @@ fn sum_of_diffs(left: &[u32], right: &[u32]) -> u32 {
 			*l - *r
 		} else {
 			*r - *l
+		})
+		.sum()
+}
+
+fn similarity_score(left: &[u32], right: &[u32]) -> u32 {
+	let mut right_map = HashMap::<u32, u32>::new();
+	for r in right {
+		*right_map.entry(*r)
+			.or_default() += 1;
+	}
+	left.iter()
+		.map(|l| if let Some(cnt) = right_map.get(l) {
+			l * cnt
+		} else {
+			0
 		})
 		.sum()
 }
