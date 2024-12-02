@@ -10,7 +10,7 @@ const EXAMPLE_INPUT_1 :&str = "\
 ";
 
 #[test]
-fn test_1_and_2() {
+fn test_1() {
 	let reports = parse_reports(EXAMPLE_INPUT_1);
 	assert_eq!(1, number_of_safe(&[reports[0].clone()]));
 	assert_eq!(0, number_of_safe(&[reports[1].clone()]));
@@ -20,4 +20,17 @@ fn test_1_and_2() {
 	assert_eq!(1, number_of_safe(&[reports[5].clone()]));
 
 	assert_eq!(2, number_of_safe(&reports));
+}
+
+#[test]
+fn test_2() {
+	let reports = parse_reports(EXAMPLE_INPUT_1);
+	assert_eq!(1, number_of_safe_dampened(&[reports[0].clone()]));
+	assert_eq!(0, number_of_safe_dampened(&[reports[1].clone()]));
+	assert_eq!(0, number_of_safe_dampened(&[reports[2].clone()]));
+	assert_eq!(1, number_of_safe_dampened(&[reports[3].clone()]));
+	assert_eq!(1, number_of_safe_dampened(&[reports[4].clone()]));
+	assert_eq!(1, number_of_safe_dampened(&[reports[5].clone()]));
+
+	assert_eq!(4, number_of_safe_dampened(&reports));
 }
