@@ -33,40 +33,46 @@ fn count_xmas(s: &str) -> u32 {
 	if width == 0 {
 		return 0;
 	}
-	let mut sum = 0;
+
+	let mut counter_s = CounterXmas::new();
+	let mut counter_d = CounterXmas::new();
 
 	dprint!("RIGHT HOR\n");
-	sum += count_for_fn_st(|i, j| chars[i][j], height, width);
-	sum += count_for_fn_di(|i, j| chars[i][j], height, width);
+	count_x_for_fn_st(&mut counter_s, |i, j| (i, j), &chars, height, width);
+	count_x_for_fn_di(&mut counter_d, |i, j| (i, j), &chars, height, width);
 	dprint!("LEFT HOR\n");
-	sum += count_for_fn_st(|i, j| chars[i][width - 1 - j], height, width);
-	sum += count_for_fn_di(|i, j| chars[i][width - 1 - j], height, width);
+	count_x_for_fn_st(&mut counter_s, |i, j| (i, width - 1 - j), &chars, height, width);
+	count_x_for_fn_di(&mut counter_d, |i, j| (i, width - 1 - j), &chars, height, width);
 	dprint!("UP VERT\n");
-	sum += count_for_fn_st(|i, j| chars[j][i], width, height);
-	sum += count_for_fn_di(|i, j| chars[height - 1 - j][i], width, height);
+	count_x_for_fn_st(&mut counter_s, |i, j| (j, i), &chars, width, height);
+	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, i), &chars, width, height);
 	dprint!("DOWN VERT\n");
-	sum += count_for_fn_st(|i, j| chars[height - 1 - j][width - 1 - i], width, height);
-	sum += count_for_fn_di(|i, j| chars[height - 1 - j][width - 1 - i], width, height);
-	sum
+	count_x_for_fn_st(&mut counter_s, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
+	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
+
+	counter_s.count + counter_d.count
 }
 
-struct Counter {
+struct CounterXmas {
 	count: u32,
 	state: u8,
 }
 
-impl Counter {
+impl CounterXmas {
 	fn new() -> Self {
-		Counter {
+		Self {
 			count: 0,
 			state: 0,
 		}
 	}
+}
+
+impl Counter for CounterXmas {
 	fn end_word(&mut self) {
 		dprint!("\n");
 		self.state = 0;
 	}
-	fn feed(&mut self, ch: char) {
+	fn feed(&mut self, ch: char, _pos: (usize, usize)) {
 		self.state = match (self.state, ch) {
 			(_, 'X') => 1,
 			(1, 'M') => 2,
@@ -82,65 +88,28 @@ impl Counter {
 	}
 }
 
-fn count_for_fn_st(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) -> u32 {
-	let mut counter = Counter::new();
-	// Straight words
-	dprint!("  straight:\n");
-	for i in 0..i_lim {
-		for j in 0..j_lim {
-			let ch = f(i, j);
-			counter.feed(ch);
-		}
-		counter.end_word();
-	}
-	dprint!("  partial count: {}\n", counter.count);
-	counter.count
+trait Counter {
+	fn end_word(&mut self);
+	fn feed(&mut self, ch: char, pos: (usize, usize));
 }
 
-fn count_for_fn_di(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) -> u32 {
-	let mut counter = Counter::new();
-	// Diagonal words
-	dprint!("  first diag:\n");
-	for i in 0..i_lim {
-		for j in 0..j_lim {
-			if i + j >= i_lim {
-				break;
-			}
-			let ch = f(i + j, j);
-			counter.feed(ch);
-		}
-		counter.end_word();
-	}
-
-	dprint!("  next diag:\n");
-	for j in 1..j_lim {
-		for i in 0..i_lim {
-			if i + j >= j_lim {
-				break;
-			}
-			let ch = f(i, i + j);
-			counter.feed(ch);
-		}
-		counter.end_word();
-	}
-	dprint!("  partial count: {}\n", counter.count);
-	counter.count
-}
-
-struct CounterX {
+struct CounterMas {
 	count: HashSet<(usize, usize)>,
 	state: (u8, Option<(usize, usize)>),
 	a_positions: HashMap<(usize, usize), usize>,
 }
 
-impl CounterX {
+impl CounterMas {
 	fn new() -> Self {
-		CounterX {
+		Self {
 			count: HashSet::new(),
 			state: (0, None),
 			a_positions: HashMap::new(),
 		}
 	}
+}
+
+impl Counter for CounterMas {
 	fn end_word(&mut self) {
 		dprint!("\n");
 		self.state = (0, None);
@@ -183,8 +152,8 @@ fn count_x_mas(s: &str) -> u32 {
 		return 0;
 	}
 
-	let mut counter_s = CounterX::new();
-	let mut counter_d = CounterX::new();
+	let mut counter_s = CounterMas::new();
+	let mut counter_d = CounterMas::new();
 
 	dprint!("RIGHT HOR\n");
 	count_x_for_fn_st(&mut counter_s, |i, j| (i, j), &chars, height, width);
@@ -205,7 +174,7 @@ fn count_x_mas(s: &str) -> u32 {
 	combined.len() as _
 }
 
-fn count_x_for_fn_st(counter: &mut CounterX, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
+fn count_x_for_fn_st(counter: &mut impl Counter, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
 	// Straight words
 	dprint!("  straight:\n");
 	for i in 0..i_lim {
@@ -218,7 +187,7 @@ fn count_x_for_fn_st(counter: &mut CounterX, f: impl Fn(usize, usize) -> (usize,
 	}
 }
 
-fn count_x_for_fn_di(counter: &mut CounterX, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
+fn count_x_for_fn_di(counter: &mut impl Counter, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
 	// Diagonal words
 	dprint!("  first diag:\n");
 	for i in 0..i_lim {
