@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const INPUT :&str = include_str!("input");
 
@@ -128,7 +128,7 @@ fn count_for_fn_di(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize)
 }
 
 struct CounterX {
-	count: u32,
+	count: HashSet<(usize, usize)>,
 	state: (u8, Option<(usize, usize)>),
 	a_positions: HashMap<(usize, usize), usize>,
 }
@@ -136,7 +136,7 @@ struct CounterX {
 impl CounterX {
 	fn new() -> Self {
 		CounterX {
-			count: 0,
+			count: HashSet::new(),
 			state: (0, None),
 			a_positions: HashMap::new(),
 		}
@@ -159,7 +159,7 @@ impl CounterX {
 			*num += 1;
 			dprint!(" XX{num}XX ");
 			if *num == 2 {
-				self.count += 1;
+				self.count.insert(a_pos);
 			}
 			self.end_word();
 		}
@@ -199,9 +199,10 @@ fn count_x_mas(s: &str) -> u32 {
 	count_x_for_fn_st(&mut counter_s, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
 	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
 
-	dprint!("  count straight: {}\n", counter_s.count);
-	dprint!("  count diagonal: {}\n", counter_d.count);
-	counter_s.count + counter_d.count
+	dprint!("  count straight: {}\n", counter_s.count.len());
+	dprint!("  count diagonal: {}\n", counter_d.count.len());
+	let combined = &counter_s.count | &counter_d.count;
+	combined.len() as _
 }
 
 fn count_x_for_fn_st(counter: &mut CounterX, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
