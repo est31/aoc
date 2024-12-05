@@ -17,14 +17,18 @@ macro_rules! dprint {
 	};
 }
 
-fn count_xmas(s: &str) -> u32 {
+fn parse(s: &str) -> Vec<Vec<char>> {
 	dprint!("--------------------\n");
 	dprint!("{s}");
 	dprint!("--------------------\n");
-	let chars = s.lines()
+	s.lines()
 		.filter(|l| !l.is_empty())
 		.map(|l| l.chars().collect::<Vec<char>>())
-		.collect::<Vec<Vec<_>>>();
+		.collect::<Vec<Vec<_>>>()
+}
+
+fn count_xmas(s: &str) -> u32 {
+	let chars = parse(s);
 	let height = chars.len();
 	if height == 0 {
 		return 0;
@@ -136,13 +140,7 @@ impl Counter for CounterMas {
 }
 
 fn count_x_mas(s: &str) -> u32 {
-	dprint!("--------------------\n");
-	dprint!("{s}");
-	dprint!("--------------------\n");
-	let chars = s.lines()
-		.filter(|l| !l.is_empty())
-		.map(|l| l.chars().collect::<Vec<char>>())
-		.collect::<Vec<Vec<_>>>();
+	let chars = parse(s);
 	let height = chars.len();
 	if height == 0 {
 		return 0;
