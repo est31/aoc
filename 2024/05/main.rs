@@ -7,8 +7,9 @@ const INPUT :&str = include_str!("input");
 mod test;
 
 fn main() {
-	let ru = parse(INPUT);
+	let mut ru = parse(INPUT);
 	println!("updates sum: {}", updates_sum(&ru));
+	println!("updates sum ordered: {}", updates_sum_ordered(&mut ru));
 }
 
 macro_rules! dprint {
@@ -68,6 +69,34 @@ fn updates_sum(ru :&RulesUpdates) -> u32 {
 			}
 			dprint!("  in order\n");
 			true
+		})
+		.map(|update| update[update.len()/2] as u32)
+		.sum()
+}
+
+fn updates_sum_ordered(ru :&mut RulesUpdates) -> u32 {
+	ru.updates.iter_mut()
+		.filter_map(|update| {
+			let mut i = 0;
+			let mut swapped = false;
+			'outer: loop {
+				for j in i + 1..update.len() {
+					let v = update[i];
+					let w = update[j];
+					let Some(w_rule) = ru.rules.get(&w) else { continue };
+					if w_rule.contains(&v) {
+						dprint!("  {w}|{v} -> swap\n");
+						update.swap(i, j);
+						swapped = true;
+						continue 'outer;
+					}
+				}
+				i += 1;
+				if i >= update.len() - 1 {
+					break;
+				}
+			}
+			swapped.then_some(update)
 		})
 		.map(|update| update[update.len()/2] as u32)
 		.sum()

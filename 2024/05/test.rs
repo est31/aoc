@@ -37,3 +37,9 @@ fn test_1() {
 	let ru = parse(EXAMPLE_INPUT_1);
 	assert_eq!(143, updates_sum(&ru));
 }
+
+#[test]
+fn test_2() {
+	let mut ru = parse(EXAMPLE_INPUT_1);
+	assert_eq!(123, updates_sum_ordered(&mut ru));
+}
