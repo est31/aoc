@@ -107,8 +107,8 @@ fn test_0() {
 
 #[test]
 fn test_1() {
-	//assert_eq!(18, count_xmas(EXAMPLE_INPUT_1));
-	//assert_eq!(18, count_xmas(EXAMPLE_INPUT_2));
+	assert_eq!(18, count_xmas(EXAMPLE_INPUT_1));
+	assert_eq!(18, count_xmas(EXAMPLE_INPUT_2));
 	assert_eq!(8, count_xmas(EXAMPLE_INPUT_2_H));
 }
 
