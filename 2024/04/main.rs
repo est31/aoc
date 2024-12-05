@@ -38,17 +38,17 @@ fn count_xmas(s: &str) -> u32 {
 	let mut counter_d = CounterXmas::new();
 
 	dprint!("RIGHT HOR\n");
-	count_x_for_fn_st(&mut counter_s, |i, j| (i, j), &chars, height, width);
-	count_x_for_fn_di(&mut counter_d, |i, j| (i, j), &chars, height, width);
+	count_for_fn_st(&mut counter_s, |i, j| (i, j), &chars, height, width);
+	count_for_fn_di(&mut counter_d, |i, j| (i, j), &chars, height, width);
 	dprint!("LEFT HOR\n");
-	count_x_for_fn_st(&mut counter_s, |i, j| (i, width - 1 - j), &chars, height, width);
-	count_x_for_fn_di(&mut counter_d, |i, j| (i, width - 1 - j), &chars, height, width);
+	count_for_fn_st(&mut counter_s, |i, j| (i, width - 1 - j), &chars, height, width);
+	count_for_fn_di(&mut counter_d, |i, j| (i, width - 1 - j), &chars, height, width);
 	dprint!("UP VERT\n");
-	count_x_for_fn_st(&mut counter_s, |i, j| (j, i), &chars, width, height);
-	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, i), &chars, width, height);
+	count_for_fn_st(&mut counter_s, |i, j| (j, i), &chars, width, height);
+	count_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, i), &chars, width, height);
 	dprint!("DOWN VERT\n");
-	count_x_for_fn_st(&mut counter_s, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
-	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
+	count_for_fn_st(&mut counter_s, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
+	count_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
 
 	counter_s.count + counter_d.count
 }
@@ -156,17 +156,17 @@ fn count_x_mas(s: &str) -> u32 {
 	let mut counter_d = CounterMas::new();
 
 	dprint!("RIGHT HOR\n");
-	count_x_for_fn_st(&mut counter_s, |i, j| (i, j), &chars, height, width);
-	count_x_for_fn_di(&mut counter_d, |i, j| (i, j), &chars, height, width);
+	count_for_fn_st(&mut counter_s, |i, j| (i, j), &chars, height, width);
+	count_for_fn_di(&mut counter_d, |i, j| (i, j), &chars, height, width);
 	dprint!("LEFT HOR\n");
-	count_x_for_fn_st(&mut counter_s, |i, j| (i, width - 1 - j), &chars, height, width);
-	count_x_for_fn_di(&mut counter_d, |i, j| (i, width - 1 - j), &chars, height, width);
+	count_for_fn_st(&mut counter_s, |i, j| (i, width - 1 - j), &chars, height, width);
+	count_for_fn_di(&mut counter_d, |i, j| (i, width - 1 - j), &chars, height, width);
 	dprint!("UP VERT\n");
-	count_x_for_fn_st(&mut counter_s, |i, j| (j, i), &chars, width, height);
-	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, i), &chars, width, height);
+	count_for_fn_st(&mut counter_s, |i, j| (j, i), &chars, width, height);
+	count_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, i), &chars, width, height);
 	dprint!("DOWN VERT\n");
-	count_x_for_fn_st(&mut counter_s, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
-	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
+	count_for_fn_st(&mut counter_s, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
+	count_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
 
 	dprint!("  count straight: {}\n", counter_s.count.len());
 	dprint!("  count diagonal: {}\n", counter_d.count.len());
@@ -174,7 +174,7 @@ fn count_x_mas(s: &str) -> u32 {
 	combined.len() as _
 }
 
-fn count_x_for_fn_st(counter: &mut impl Counter, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
+fn count_for_fn_st(counter: &mut impl Counter, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
 	// Straight words
 	dprint!("  straight:\n");
 	for i in 0..i_lim {
@@ -187,7 +187,7 @@ fn count_x_for_fn_st(counter: &mut impl Counter, f: impl Fn(usize, usize) -> (us
 	}
 }
 
-fn count_x_for_fn_di(counter: &mut impl Counter, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
+fn count_for_fn_di(counter: &mut impl Counter, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
 	// Diagonal words
 	dprint!("  first diag:\n");
 	for i in 0..i_lim {
