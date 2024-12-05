@@ -168,8 +168,7 @@ fn count_x_mas(s: &str) -> u32 {
 
 	dprint!("  count straight: {}\n", counter_s.count.len());
 	dprint!("  count diagonal: {}\n", counter_d.count.len());
-	let combined = &counter_s.count | &counter_d.count;
-	combined.len() as _
+	counter_d.count.len() as _
 }
 
 fn count_for_fn_st(counter: &mut impl Counter, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
