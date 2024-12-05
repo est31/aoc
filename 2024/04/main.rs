@@ -15,6 +15,9 @@ macro_rules! dprint {
 }
 
 fn count_xmas(s: &str) -> u32 {
+	dprint!("--------------------\n");
+	dprint!("{s}");
+	dprint!("--------------------\n");
 	let chars = s.lines()
 		.filter(|l| !l.is_empty())
 		.map(|l| l.chars().collect::<Vec<char>>())
@@ -28,19 +31,19 @@ fn count_xmas(s: &str) -> u32 {
 		return 0;
 	}
 	let mut sum = 0;
-	/*sum += count_for_fn(|i, j| {
-		println!("  ({i:02}, {j:02})");
-		chars[i][j]
-	}, height, width);*/
 
 	dprint!("RIGHT HOR\n");
-	sum += count_for_fn(|i, j| chars[i][j], height, width);
+	sum += count_for_fn_st(|i, j| chars[i][j], height, width);
+	sum += count_for_fn_di(|i, j| chars[i][j], height, width);
 	dprint!("LEFT HOR\n");
-	sum += count_for_fn(|i, j| chars[i][width - 1 - j], height, width);
+	sum += count_for_fn_st(|i, j| chars[i][width - 1 - j], height, width);
+	sum += count_for_fn_di(|i, j| chars[i][width - 1 - j], height, width);
 	dprint!("UP VERT\n");
-	sum += count_for_fn(|i, j| chars[j][width - 1 - i], width, height);
+	sum += count_for_fn_st(|i, j| chars[j][i], width, height);
+	sum += count_for_fn_di(|i, j| chars[height - 1 - j][i], width, height);
 	dprint!("DOWN VERT\n");
-	sum += count_for_fn(|i, j| chars[height - 1 - j][i], width, height);
+	sum += count_for_fn_st(|i, j| chars[height - 1 - j][width - 1 - i], width, height);
+	sum += count_for_fn_di(|i, j| chars[height - 1 - j][width - 1 - i], width, height);
 	sum
 }
 
@@ -70,15 +73,13 @@ impl Counter {
 		};
 		dprint!("    '{ch}'{}", self.state);
 		if self.state == 4 {
-			dprint!("\n");
-			dprint!("    XMAS!\n");
 			self.count += 1;
 			self.state = 0;
 		}
 	}
 }
 
-fn count_for_fn(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) -> u32 {
+fn count_for_fn_st(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) -> u32 {
 	let mut counter = Counter::new();
 	// Straight words
 	dprint!("  straight:\n");
@@ -89,7 +90,12 @@ fn count_for_fn(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) ->
 		}
 		counter.end_word();
 	}
+	dprint!("  partial count: {}\n", counter.count);
+	counter.count
+}
 
+fn count_for_fn_di(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) -> u32 {
+	let mut counter = Counter::new();
 	// Diagonal words
 	dprint!("  first diag:\n");
 	for i in 0..i_lim {
@@ -106,10 +112,10 @@ fn count_for_fn(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) ->
 	dprint!("  next diag:\n");
 	for j in 1..j_lim {
 		for i in 0..i_lim {
-			if i + j >= i_lim {
+			if i + j >= j_lim {
 				break;
 			}
-			let ch = f(i + j, j);
+			let ch = f(i, i + j);
 			counter.feed(ch);
 		}
 		counter.end_word();
