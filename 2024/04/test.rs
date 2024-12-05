@@ -123,3 +123,10 @@ fn test_1_3() {
 	assert_eq!(1, count_xmas(EXAMPLE_INPUT_3_7));
 	assert_eq!(1, count_xmas(EXAMPLE_INPUT_3_8));
 }
+
+#[test]
+fn test_2() {
+	assert_eq!(0, count_x_mas(EXAMPLE_INPUT_0));
+	assert_eq!(9, count_x_mas(EXAMPLE_INPUT_1));
+	assert_eq!(9, count_x_mas(EXAMPLE_INPUT_2));
+}
