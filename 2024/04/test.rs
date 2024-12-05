@@ -22,6 +22,20 @@ MAMMMXMMMM
 MXMXAXMASX
 ";
 
+const EXAMPLE_INPUT_1_X_H :&str = "\
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+";
+
+const EXAMPLE_INPUT_ONLY_RIGHT_ANGLE :&str = "\
+S.S.SS
+.A.AA.
+M.MMMM
+";
 
 const EXAMPLE_INPUT_2 :&str = "\
 ....XXMAS.
@@ -41,6 +55,20 @@ S.S.S.S.SS
 .A.A.A.A.A
 ..M.M.M.MM
 .X.X.XMASX
+";
+
+
+const EXAMPLE_INPUT_2_X :&str = "\
+.M.S......
+..A..MSMS.
+.M.S.MAA..
+..A.ASMSM.
+.M.S.M....
+..........
+S.S.S.S.S.
+.A.A.A.A..
+M.M.M.M.M.
+..........
 ";
 
 const EXAMPLE_INPUT_3_1 :&str = "\
@@ -127,6 +155,8 @@ fn test_1_3() {
 #[test]
 fn test_2() {
 	assert_eq!(0, count_x_mas(EXAMPLE_INPUT_0));
+	assert_eq!(2, count_x_mas(EXAMPLE_INPUT_ONLY_RIGHT_ANGLE));
+	assert_eq!(9, count_x_mas(EXAMPLE_INPUT_2_X));
+	assert_eq!(4, count_x_mas(EXAMPLE_INPUT_1_X_H));
 	assert_eq!(9, count_x_mas(EXAMPLE_INPUT_1));
-	assert_eq!(9, count_x_mas(EXAMPLE_INPUT_2));
 }

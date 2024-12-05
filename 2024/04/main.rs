@@ -12,7 +12,7 @@ fn main() {
 
 macro_rules! dprint {
 	($($args:expr),*) => {
-		//if false
+		if false
 			{ print!($($args),*); }
 	};
 }
@@ -157,6 +157,7 @@ impl CounterX {
 			let a_pos = self.state.1.unwrap();
 			let num = self.a_positions.entry(a_pos).or_default();
 			*num += 1;
+			dprint!(" XX{num}XX ");
 			if *num == 2 {
 				self.count += 1;
 			}
@@ -182,23 +183,25 @@ fn count_x_mas(s: &str) -> u32 {
 		return 0;
 	}
 
-	let mut counter = CounterX::new();
+	let mut counter_s = CounterX::new();
+	let mut counter_d = CounterX::new();
 
 	dprint!("RIGHT HOR\n");
-	count_x_for_fn_st(&mut counter, |i, j| (i, j), &chars, height, width);
-	count_x_for_fn_di(&mut counter, |i, j| (i, j), &chars, height, width);
+	count_x_for_fn_st(&mut counter_s, |i, j| (i, j), &chars, height, width);
+	count_x_for_fn_di(&mut counter_d, |i, j| (i, j), &chars, height, width);
 	dprint!("LEFT HOR\n");
-	count_x_for_fn_st(&mut counter, |i, j| (i, width - 1 - j), &chars, height, width);
-	count_x_for_fn_di(&mut counter, |i, j| (i, width - 1 - j), &chars, height, width);
+	count_x_for_fn_st(&mut counter_s, |i, j| (i, width - 1 - j), &chars, height, width);
+	count_x_for_fn_di(&mut counter_d, |i, j| (i, width - 1 - j), &chars, height, width);
 	dprint!("UP VERT\n");
-	count_x_for_fn_st(&mut counter, |i, j| (j, i), &chars, width, height);
-	count_x_for_fn_di(&mut counter, |i, j| (height - 1 - j, i), &chars, width, height);
+	count_x_for_fn_st(&mut counter_s, |i, j| (j, i), &chars, width, height);
+	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, i), &chars, width, height);
 	dprint!("DOWN VERT\n");
-	count_x_for_fn_st(&mut counter, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
-	count_x_for_fn_di(&mut counter, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
+	count_x_for_fn_st(&mut counter_s, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
+	count_x_for_fn_di(&mut counter_d, |i, j| (height - 1 - j, width - 1 - i), &chars, width, height);
 
-	dprint!("  count: {}\n", counter.count);
-	counter.count
+	dprint!("  count straight: {}\n", counter_s.count);
+	dprint!("  count diagonal: {}\n", counter_d.count);
+	counter_s.count + counter_d.count
 }
 
 fn count_x_for_fn_st(counter: &mut CounterX, f: impl Fn(usize, usize) -> (usize, usize), chars: &[Vec<char>], i_lim: usize, j_lim: usize) {
