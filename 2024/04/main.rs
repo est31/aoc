@@ -10,7 +10,8 @@ fn main() {
 
 macro_rules! dprint {
 	($($args:expr),*) => {
-		print!($($args),*);
+		if false
+			{ print!($($args),*); }
 	};
 }
 
