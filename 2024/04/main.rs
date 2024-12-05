@@ -8,6 +8,12 @@ fn main() {
 	println!("xmas count: {}", count_xmas(INPUT));
 }
 
+macro_rules! dprint {
+	($($args:expr),*) => {
+		print!($($args),*);
+	};
+}
+
 fn count_xmas(s: &str) -> u32 {
 	let chars = s.lines()
 		.filter(|l| !l.is_empty())
@@ -27,9 +33,13 @@ fn count_xmas(s: &str) -> u32 {
 		chars[i][j]
 	}, height, width);*/
 
+	dprint!("RIGHT HOR\n");
 	sum += count_for_fn(|i, j| chars[i][j], height, width);
+	dprint!("LEFT HOR\n");
 	sum += count_for_fn(|i, j| chars[i][width - 1 - j], height, width);
-	sum += count_for_fn(|i, j| chars[height - 1 - j][width - 1 - i], width, height);
+	dprint!("UP VERT\n");
+	sum += count_for_fn(|i, j| chars[j][width - 1 - i], width, height);
+	dprint!("DOWN VERT\n");
 	sum += count_for_fn(|i, j| chars[height - 1 - j][i], width, height);
 	sum
 }
@@ -47,6 +57,7 @@ impl Counter {
 		}
 	}
 	fn end_word(&mut self) {
+		dprint!("\n");
 		self.state = 0;
 	}
 	fn feed(&mut self, ch: char) {
@@ -57,8 +68,10 @@ impl Counter {
 			(3, 'S') => 4,
 			_ => 0,
 		};
+		dprint!("    '{ch}'{}", self.state);
 		if self.state == 4 {
-			println!("    XMAS!");
+			dprint!("\n");
+			dprint!("    XMAS!\n");
 			self.count += 1;
 			self.state = 0;
 		}
@@ -68,7 +81,7 @@ impl Counter {
 fn count_for_fn(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) -> u32 {
 	let mut counter = Counter::new();
 	// Straight words
-	println!("  straight:");
+	dprint!("  straight:\n");
 	for i in 0..i_lim {
 		for j in 0..j_lim {
 			let ch = f(i, j);
@@ -78,7 +91,7 @@ fn count_for_fn(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) ->
 	}
 
 	// Diagonal words
-	println!("  first diag:");
+	dprint!("  first diag:\n");
 	for i in 0..i_lim {
 		for j in 0..j_lim {
 			if i + j >= i_lim {
@@ -90,7 +103,7 @@ fn count_for_fn(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) ->
 		counter.end_word();
 	}
 
-	println!("  next diag:");
+	dprint!("  next diag:\n");
 	for j in 1..j_lim {
 		for i in 0..i_lim {
 			if i + j >= i_lim {
@@ -101,6 +114,6 @@ fn count_for_fn(f: impl Fn(usize, usize) -> char, i_lim: usize, j_lim: usize) ->
 		}
 		counter.end_word();
 	}
-	println!("  partial count: {}", counter.count);
+	dprint!("  partial count: {}\n", counter.count);
 	counter.count
 }
