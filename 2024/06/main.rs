@@ -8,9 +8,10 @@ mod test;
 fn main() {
 	let f = parse(INPUT);
 	println!("positions visited: {}", positions_visited(&f));
+	println!("possible obstacles: {}", possible_obstacles_for_loop(&f));
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 enum Direction {
 	Up,
 	Down,
@@ -66,6 +67,27 @@ impl Field {
 			}
 		}
 	}
+	fn outcome(&mut self) -> Outcome {
+		let mut vis_p = HashSet::new();
+		let mut vis_pd = HashSet::new();
+		vis_p.insert(self.pos);
+		vis_pd.insert((self.pos, self.dir));
+		while self.step() {
+			vis_p.insert(self.pos);
+			if !vis_pd.insert((self.pos, self.dir)) {
+				return Outcome::Loop;
+			}
+		}
+		Outcome::Leaves {
+			visited: vis_p.len() as u32,
+		}
+	}
+}
+
+#[derive(Copy, Clone)]
+enum Outcome {
+	Loop,
+	Leaves { visited: u32 },
 }
 
 fn parse(s: &str) -> Field {
@@ -106,11 +128,34 @@ fn parse(s: &str) -> Field {
 }
 
 fn positions_visited(f: &Field) -> u32 {
-	let mut visited = HashSet::new();
 	let mut fld = f.clone();
-	visited.insert(fld.pos);
-	while fld.step() {
-		visited.insert(fld.pos);
+	match fld.outcome() {
+		Outcome::Leaves { visited } => visited,
+		Outcome::Loop => panic!("Guard never loops at start"),
 	}
-	visited.len() as u32
+}
+
+fn possible_obstacles_for_loop(f: &Field) -> u32 {
+	let mut fld = f.clone();
+	let init_pos = fld.pos;
+	let init_dir = fld.dir;
+	let mut obstacle_count = 0;
+	for y in 0..fld.height {
+		for x in 0..fld.width {
+			if (y, x) == init_pos {
+				continue;
+			}
+			if fld.field[y][x] {
+				continue;
+			}
+			fld.field[y][x] = true;
+			if matches!(fld.outcome(), Outcome::Loop) {
+				obstacle_count += 1;
+			}
+			fld.pos = init_pos;
+			fld.dir = init_dir;
+			fld.field[y][x] = false;
+		}
+	}
+	obstacle_count
 }
