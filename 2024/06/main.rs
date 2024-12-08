@@ -79,15 +79,15 @@ impl Field {
 			}
 		}
 		Outcome::Leaves {
-			visited: vis_p.len() as u32,
+			visited: vis_p,
 		}
 	}
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 enum Outcome {
 	Loop,
-	Leaves { visited: u32 },
+	Leaves { visited: HashSet<(usize, usize)> },
 }
 
 fn parse(s: &str) -> Field {
@@ -130,7 +130,7 @@ fn parse(s: &str) -> Field {
 fn positions_visited(f: &Field) -> u32 {
 	let mut fld = f.clone();
 	match fld.outcome() {
-		Outcome::Leaves { visited } => visited,
+		Outcome::Leaves { visited } => visited.len() as u32,
 		Outcome::Loop => panic!("Guard never loops at start"),
 	}
 }
@@ -139,9 +139,12 @@ fn possible_obstacles_for_loop(f: &Field) -> u32 {
 	let mut fld = f.clone();
 	let init_pos = fld.pos;
 	let init_dir = fld.dir;
+	let candidates = match fld.clone().outcome() {
+		Outcome::Leaves { visited } => visited,
+		Outcome::Loop => panic!("Guard never loops at start"),
+	};
 	let mut obstacle_count = 0;
-	for y in 0..fld.height {
-		for x in 0..fld.width {
+	for (y, x) in candidates {
 			if (y, x) == init_pos {
 				continue;
 			}
@@ -155,7 +158,6 @@ fn possible_obstacles_for_loop(f: &Field) -> u32 {
 			fld.pos = init_pos;
 			fld.dir = init_dir;
 			fld.field[y][x] = false;
-		}
 	}
 	obstacle_count
 }
