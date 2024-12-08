@@ -17,4 +17,11 @@ const EXAMPLE_INPUT_1 :&str = "\
 fn test_1() {
 	let eqs = parse(EXAMPLE_INPUT_1);
 	assert_eq!(3749, total_calibration_res(&eqs));
+	assert_eq!(11387, total_calibration_concat(&eqs));
+}
+
+#[test]
+fn test_concat() {
+	assert_eq!(156, concat(15, 6));
+	assert_eq!(12345, concat(12, 345));
 }

@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let eqs = parse(INPUT);
 	println!("total calibration sum: {}", total_calibration_res(&eqs));
+	println!("total calibration sum (concat): {}", total_calibration_concat(&eqs));
 }
 
 fn parse(s: &str) -> Vec<(u64, Vec<u64>)> {
@@ -25,41 +26,70 @@ fn parse(s: &str) -> Vec<(u64, Vec<u64>)> {
 		.collect::<Vec<_>>()
 }
 
-fn res_so_far(terms: &[u64], ops: &[bool]) -> u64 {
+#[derive(Clone, Copy)]
+enum Operation {
+	Mul,
+	Add,
+	Concat,
+}
+
+fn concat(a: u64, b: u64) -> u64 {
+	let b_digits = b.ilog(10);
+	let mul = 10_u64.pow(b_digits + 1);
+	a * mul + b
+}
+
+fn res_so_far(terms: &[u64], ops: &[Operation]) -> u64 {
 	terms.iter()
 		.zip(ops.iter())
-		.fold(0, |acc, (t, o)| if *o {
-			acc + (*t)
-		} else {
-			acc * (*t)
+		.fold(0, |acc, (t, o)| match *o {
+			Operation::Mul => acc * (*t),
+			Operation::Add => acc + (*t),
+			Operation::Concat => concat(acc, *t),
 		})
 }
 
-fn sat_inner(res: u64, terms: &[u64], ops: &mut Vec<bool>) -> bool {
+fn sat_inner(res: u64, terms: &[u64], ops: &mut Vec<Operation>,
+		allowed_ops: &[Operation]) -> bool {
 	if ops.len() == terms.len() {
 		res_so_far(terms, ops) == res
 	} else {
-		ops.push(true);
-		let sat = sat_inner(res, terms, ops);
-		ops.pop();
-		if sat {
-			return true;
+		if res_so_far(terms, ops) > res {
+			return false;
 		}
-		ops.push(false);
-		let sat = sat_inner(res, terms, ops);
-		ops.pop();
-		sat
+		for op in allowed_ops {
+			ops.push(*op);
+			let sat = sat_inner(res, terms, ops, allowed_ops);
+			ops.pop();
+			if sat {
+				return true;
+			}
+		}
+		false
 	}
 }
 
-fn satisfyable(res: u64, terms: &[u64]) -> bool {
+fn satisfyable(res: u64, terms: &[u64], allowed_ops :&[Operation]) -> bool {
 	let mut ops = Vec::with_capacity(terms.len());
-	sat_inner(res, terms, &mut ops)
+	sat_inner(res, terms, &mut ops, allowed_ops)
 }
 
 fn total_calibration_res(eqs: &[(u64, Vec<u64>)]) -> u64 {
+	let allowed_ops = [Operation::Add, Operation::Mul];
 	eqs.iter()
-		.filter(|(res, terms)| satisfyable(*res, terms))
+		.filter(|(res, terms)| satisfyable(*res, terms, &allowed_ops))
+		.map(|(res, _)| *res)
+		.sum::<u64>()
+}
+
+fn total_calibration_concat(eqs: &[(u64, Vec<u64>)]) -> u64 {
+	let allowed_ops = [
+		Operation::Add,
+		Operation::Mul,
+		Operation::Concat
+	];
+	eqs.iter()
+		.filter(|(res, terms)| satisfyable(*res, terms, &allowed_ops))
 		.map(|(res, _)| *res)
 		.sum::<u64>()
 }
