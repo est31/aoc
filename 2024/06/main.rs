@@ -108,6 +108,7 @@ fn parse(s: &str) -> Field {
 fn positions_visited(f: &Field) -> u32 {
 	let mut visited = HashSet::new();
 	let mut fld = f.clone();
+	visited.insert(fld.pos);
 	while fld.step() {
 		visited.insert(fld.pos);
 	}
