@@ -39,7 +39,7 @@ fn concat(a: u64, b: u64) -> u64 {
 	a * mul + b
 }
 
-fn sat_inner(res: u64, acc: u64, terms: &[u64], allowed_ops: &[Operation]) -> bool {
+fn sat_inner<const ALLOWED_CONCAT: bool>(res: u64, acc: u64, terms: &[u64]) -> bool {
 	if terms.is_empty() {
 		acc == res
 	} else {
@@ -47,13 +47,20 @@ fn sat_inner(res: u64, acc: u64, terms: &[u64], allowed_ops: &[Operation]) -> bo
 			return false;
 		}
 		let t = terms[0];
+		let allowed_ops: &[_] = const {
+			if ALLOWED_CONCAT {
+				&[Operation::Add, Operation::Mul, Operation::Concat]
+			} else {
+				&[Operation::Add, Operation::Mul]
+			}
+		};
 		for op in allowed_ops {
 			let new_acc = match *op {
 				Operation::Mul => acc * t,
 				Operation::Add => acc + t,
 				Operation::Concat => concat(acc, t),
 			};
-			let sat = sat_inner(res, new_acc, &terms[1..], allowed_ops);
+			let sat = sat_inner::<ALLOWED_CONCAT>(res, new_acc, &terms[1..]);
 			if sat {
 				return true;
 			}
@@ -62,26 +69,24 @@ fn sat_inner(res: u64, acc: u64, terms: &[u64], allowed_ops: &[Operation]) -> bo
 	}
 }
 
-fn satisfyable(res: u64, terms: &[u64], allowed_ops :&[Operation]) -> bool {
-	sat_inner(res, 0, terms, allowed_ops)
+fn satisfyable(res: u64, terms: &[u64], concat_allowed: bool) -> bool {
+	if concat_allowed {
+		sat_inner::<true>(res, 0, terms)
+	} else {
+		sat_inner::<false>(res, 0, terms)
+	}
 }
 
 fn total_calibration_res(eqs: &[(u64, Vec<u64>)]) -> u64 {
-	let allowed_ops = [Operation::Add, Operation::Mul];
 	eqs.iter()
-		.filter(|(res, terms)| satisfyable(*res, terms, &allowed_ops))
+		.filter(|(res, terms)| satisfyable(*res, terms, false))
 		.map(|(res, _)| *res)
 		.sum::<u64>()
 }
 
 fn total_calibration_concat(eqs: &[(u64, Vec<u64>)]) -> u64 {
-	let allowed_ops = [
-		Operation::Add,
-		Operation::Mul,
-		Operation::Concat
-	];
 	eqs.iter()
-		.filter(|(res, terms)| satisfyable(*res, terms, &allowed_ops))
+		.filter(|(res, terms)| satisfyable(*res, terms, true))
 		.map(|(res, _)| *res)
 		.sum::<u64>()
 }
