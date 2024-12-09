@@ -39,24 +39,21 @@ fn concat(a: u64, b: u64) -> u64 {
 	a * mul + b
 }
 
-fn sat_inner(res: u64, acc: u64, terms: &[u64], ops: &mut Vec<Operation>,
-		allowed_ops: &[Operation]) -> bool {
-	if ops.len() == terms.len() {
+fn sat_inner(res: u64, acc: u64, terms: &[u64], allowed_ops: &[Operation]) -> bool {
+	if terms.is_empty() {
 		acc == res
 	} else {
 		if acc > res {
 			return false;
 		}
+		let t = terms[0];
 		for op in allowed_ops {
-			let t = terms[ops.len()];
 			let new_acc = match *op {
 				Operation::Mul => acc * t,
 				Operation::Add => acc + t,
 				Operation::Concat => concat(acc, t),
 			};
-			ops.push(*op);
-			let sat = sat_inner(res, new_acc, terms, ops, allowed_ops);
-			ops.pop();
+			let sat = sat_inner(res, new_acc, &terms[1..], allowed_ops);
 			if sat {
 				return true;
 			}
@@ -66,8 +63,7 @@ fn sat_inner(res: u64, acc: u64, terms: &[u64], ops: &mut Vec<Operation>,
 }
 
 fn satisfyable(res: u64, terms: &[u64], allowed_ops :&[Operation]) -> bool {
-	let mut ops = Vec::with_capacity(terms.len());
-	sat_inner(res, 0, terms, &mut ops, allowed_ops)
+	sat_inner(res, 0, terms, allowed_ops)
 }
 
 fn total_calibration_res(eqs: &[(u64, Vec<u64>)]) -> u64 {
