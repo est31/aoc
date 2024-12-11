@@ -20,4 +20,5 @@ const EXAMPLE_INPUT_1 :&str = "\
 fn test_1() {
 	let eqs = parse(EXAMPLE_INPUT_1);
 	assert_eq!(14, unique_with_antinode(&eqs));
+	assert_eq!(34, unique_with_antinode_unlimited(&eqs));
 }

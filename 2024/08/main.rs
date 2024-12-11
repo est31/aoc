@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let map = parse(INPUT);
 	println!("unique count with antinode: {}", unique_with_antinode(&map));
+	println!("unique count with antinode unlimited: {}", unique_with_antinode_unlimited(&map));
 }
 
 fn parse(s: &str) -> Map {
@@ -70,6 +71,44 @@ fn unique_with_antinode(map: &Map) -> u32 {
 				let an_1_y = a1.0 as i32 + y_diff;
 				let an_1_x = a1.1 as i32 + x_diff;
 				maybe_add(&mut with_antinode, an_1_y, an_1_x);
+			}
+		}
+	}
+
+	with_antinode.len() as u32
+}
+
+fn unique_with_antinode_unlimited(map: &Map) -> u32 {
+	let mut with_antinode = HashSet::new();
+
+	let maybe_add = |with_antinode :&mut HashSet<_>, an_y, an_x| -> bool {
+		let in_bounds = map.pos_in_bounds(an_y, an_x);
+		if in_bounds {
+			with_antinode.insert((an_y as u32, an_x as u32));
+		}
+		in_bounds
+	};
+	let maybe_add_while = |with_antinode :&mut HashSet<_>, an_y, an_x, y_diff, x_diff| {
+		let mut an_y = an_y;
+		let mut an_x = an_x;
+		while maybe_add(with_antinode, an_y, an_x) {
+			an_y += y_diff;
+			an_x += x_diff;
+		}
+	};
+	for (_ch, antennas) in map.antennas.iter() {
+		for (i, a0) in antennas.iter().enumerate() {
+			if i + 1 == antennas.len() {
+				continue;
+			}
+			for a1 in antennas[i + 1..].iter() {
+				let y_diff = a1.0 as i32 - a0.0 as i32;
+				let x_diff = a1.1 as i32 - a0.1 as i32;
+
+				let an_y = a0.0 as i32;
+				let an_x = a0.1 as i32;
+				maybe_add_while(&mut with_antinode, an_y, an_x, y_diff, x_diff);
+				maybe_add_while(&mut with_antinode, an_y, an_x, -y_diff, -x_diff);
 			}
 		}
 	}
