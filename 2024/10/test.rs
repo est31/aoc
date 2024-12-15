@@ -48,6 +48,18 @@ const EXAMPLE_INPUT_5 :&str = "\
 10456732
 ";
 
+
+const EXAMPLE_INPUT_6 :&str = "\
+.....0.
+..4321.
+..5..2.
+..6543.
+..7..4.
+..8765.
+..9....
+";
+
+
 #[test]
 fn test_1() {
 	let eqs = parse(EXAMPLE_INPUT_1);
@@ -76,4 +88,11 @@ fn test_4() {
 fn test_5() {
 	let eqs = parse(EXAMPLE_INPUT_5);
 	assert_eq!(36, trailhead_sum(&eqs));
+	assert_eq!(81, trailhead_ratings(&eqs));
+}
+
+#[test]
+fn test_6() {
+	let eqs = parse(EXAMPLE_INPUT_6);
+	assert_eq!(3, trailhead_ratings(&eqs));
 }

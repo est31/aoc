@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let map = parse(INPUT);
 	println!("trailhead sum: {}", trailhead_sum(&map));
+	println!("trailhead ratings: {}", trailhead_ratings(&map));
 }
 
 macro_rules! dprint {
@@ -55,6 +56,14 @@ fn neighs(p: (usize, usize), height :usize, width :usize) -> Vec<(usize, usize)>
 }
 
 fn trailhead_sum(fields :&[Vec<u8>]) -> u32 {
+	trailhead_sums(fields).0
+}
+
+fn trailhead_ratings(fields :&[Vec<u8>]) -> u32 {
+	trailhead_sums(fields).1
+}
+
+fn trailhead_sums(fields :&[Vec<u8>]) -> (u32, u32) {
 	let height = fields.len();
 	let width = fields[0].len();
 
@@ -76,21 +85,23 @@ fn trailhead_sum(fields :&[Vec<u8>]) -> u32 {
 		.into_iter()
 		.map(|p| (9, p))
 		.collect::<BTreeSet<_>>();
-	let mut paths_uphill = HashMap::<(usize, usize), HashSet<(usize, usize)>>::new();
+	let mut paths_uphill = HashMap::<(usize, usize), (HashSet<(usize, usize)>, u32)>::new();
 
 	let mut trailhead_sum = 0;
+	let mut trailhead_ratings = 0;
 	while let Some((v, p)) = to_search.pop_last() {
 		dprint!("v={v} p={p:?} ");
 		let to_add = if v == 9 {
-			HashSet::from([p])
+			(HashSet::from([p]), 1)
 		} else {
 			paths_uphill[&p].clone()
 		};
 		dprint!("to_add={to_add:?} ");
 		if v == 0 {
 			// trailhead
-			trailhead_sum += to_add.len();
-			dprint!("-> HEAD inc={} SUM NOW {trailhead_sum}\n", to_add.len());
+			trailhead_sum += to_add.0.len();
+			trailhead_ratings += to_add.1;
+			dprint!("-> HEAD ta={} inc={} SUM NOW {trailhead_sum}\n", to_add.0.len(), to_add.1);
 			continue;
 		}
 		// iter over neighbours, only descend
@@ -100,13 +111,14 @@ fn trailhead_sum(fields :&[Vec<u8>]) -> u32 {
 				continue;
 			}
 			dprint!(" {neigh:?}");
-			paths_uphill.entry(neigh)
-				.or_default()
-				.extend(&to_add);
+			let neigh_uphills = paths_uphill.entry(neigh)
+				.or_default();
+			neigh_uphills.0.extend(&to_add.0);
+			neigh_uphills.1 += to_add.1;
 			to_search.insert((neigh_v, neigh));
 		}
 		dprint!("\n");
 	}
 
-	trailhead_sum as u32
+	(trailhead_sum as u32, trailhead_ratings)
 }
