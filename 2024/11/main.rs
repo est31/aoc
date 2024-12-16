@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 const INPUT :&str = include_str!("input");
@@ -8,6 +9,7 @@ mod test;
 fn main() {
 	let stn = parse(INPUT);
 	println!("stone count: {}", stone_count_25(&stn));
+	println!("stone count: {}", stone_count_n(&stn, 75));
 }
 
 macro_rules! dprint {
@@ -26,35 +28,45 @@ fn parse(s: &str) -> Vec<u64> {
 		.collect::<Vec<_>>()
 }
 
-fn stone_count_25(stones :&[u64]) -> u32 {
+fn stone_count_25(stones :&[u64]) -> u64 {
 	stone_count_n(stones, 25)
 }
 
-fn stone_count_n(stones :&[u64], n: u32) -> u32 {
-	let mut stones = stones.to_vec();
+fn stone_count_n(stones :&[u64], n: u32) -> u64 {
+	let mut stones = stones.iter()
+		.cloned()
+		.map(|st| (st, 1))
+		.collect::<HashMap<u64, u64>>();
 	for _ in 0..n {
 		stones = blink(&stones);
 		dprint!("{stones:?}\n");
 	}
-	stones.len() as u32
+	stones.iter()
+		.map(|(_st, cnt)| *cnt)
+		.sum()
 }
 
-fn blink(stones: &[u64]) -> Vec<u64> {
-	let mut new_stones = Vec::with_capacity(stones.len());
-	for st in stones.iter() {
-		match *st {
+fn blink(stones: &HashMap<u64, u64>) -> HashMap<u64, u64> {
+	let mut new_stones = HashMap::with_capacity(stones.len());
+	for (st, cnt) in stones.iter() {
+		let v = match st {
 			0 => {
-				new_stones.push(1);
+				1
 			},
 			_ if (*st).ilog10() % 2 == 1 => {
 				let (upper, lower) = split(*st);
-				new_stones.push(upper);
-				new_stones.push(lower);
+				*new_stones.entry(upper)
+					.or_default() += cnt;
+				*new_stones.entry(lower)
+					.or_default() += cnt;
+				continue;
 			},
 			_ => {
-				new_stones.push(*st * 2024);
+				*st * 2024
 			},
-		}
+		};
+		*new_stones.entry(v)
+			.or_default() += cnt;
 	}
 	new_stones
 }
