@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::str::FromStr;
 
 const INPUT :&str = include_str!("input");
@@ -79,16 +79,26 @@ impl Scene {
 			pv.pos.1 = pv.pos.1.rem_euclid(self.height as i32);
 		}
 	}
-	fn print(&self) {
-		let hs = self.pvs.iter()
+	fn pos_hm(&self) -> HashMap<(i32, i32), u32> {
+		self.pvs.iter()
 			.map(|pv| {
 				(pv.pos.0, pv.pos.1)
 			})
-			.collect::<HashSet<_>>();
+			.fold(HashMap::<_, u32>::new(), |mut hm, p| {
+				*hm.entry(p).or_default() += 1;
+				hm
+			})
+	}
+	fn print(&self) {
+		let hm = self.pos_hm();
 		for y in 0..(self.height as i32) {
 			for x in 0..(self.width as i32) {
-				if hs.contains(&(x, y)) {
-					print!("X");
+				if let Some(v) = hm.get(&(x, y)) {
+					if *v < 10 {
+						print!("{v}");
+					} else {
+						print!("X");
+					}
 				} else {
 					print!(".");
 				}
