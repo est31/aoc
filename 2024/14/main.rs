@@ -37,44 +37,52 @@ fn parse(s :&str) -> Vec<PosVel> {
 		.collect::<Vec<_>>()
 }
 
-fn one_sec(pvs :&mut [PosVel], width :usize, height :usize) {
-	for pv in pvs.iter_mut() {
-		pv.pos.0 += pv.vel.0;
-		pv.pos.1 += pv.vel.1;
-		pv.pos.0 = pv.pos.0.rem_euclid(width as i32);
-		pv.pos.1 = pv.pos.1.rem_euclid(height as i32);
-	}
+struct Scene {
+	pvs :Vec<PosVel>,
+	width :usize,
+	height :usize,
 }
 
-fn safety_factor_wh(pvs :&[PosVel], width :usize, height :usize) -> u32 {
-	let mut q_cnts = [0u32; 4];
-	let m_x = width as i32 / 2;
-	let m_y = height as i32 / 2;
+impl Scene {
+	fn safety_factor_wh(&self) -> u32 {
+		let mut q_cnts = [0u32; 4];
+		let m_x = self.width as i32 / 2;
+		let m_y = self.height as i32 / 2;
 
 
-	for pv in pvs.iter() {
-		use core::cmp::Ordering::*;
-		let p = pv.pos;
-		let qi = match (p.0.cmp(&m_x), p.1.cmp(&m_y)) {
-			// Not in any quadrant
-			(_, Equal) | (Equal, _) => continue,
-			(Less, Less) => 0,
-			(Less, Greater) => 1,
-			(Greater, Less) => 2,
-			(Greater, Greater) => 3,
-		};
-		q_cnts[qi] += 1;
+		for pv in self.pvs.iter() {
+			use core::cmp::Ordering::*;
+			let p = pv.pos;
+			let qi = match (p.0.cmp(&m_x), p.1.cmp(&m_y)) {
+				// Not in any quadrant
+				(_, Equal) | (Equal, _) => continue,
+				(Less, Less) => 0,
+				(Less, Greater) => 1,
+				(Greater, Less) => 2,
+				(Greater, Greater) => 3,
+			};
+			q_cnts[qi] += 1;
+		}
+		q_cnts.into_iter().product()
 	}
-	q_cnts.into_iter().product()
+
+	fn one_sec(&mut self) {
+		for pv in self.pvs.iter_mut() {
+			pv.pos.0 += pv.vel.0;
+			pv.pos.1 += pv.vel.1;
+			pv.pos.0 = pv.pos.0.rem_euclid(self.width as i32);
+			pv.pos.1 = pv.pos.1.rem_euclid(self.height as i32);
+		}
+	}
 }
 
 fn safety_factor_100_wh(pvs :&[PosVel], width :usize, height :usize) -> u32 {
-	let mut pvs = pvs.to_vec();
+	let mut scene = Scene { pvs: pvs.to_vec(), width, height };
 	let secs = 100;
 	for _ in 0..secs {
-		one_sec(&mut pvs, width, height);
+		scene.one_sec();
 	}
-	safety_factor_wh(&pvs, width, height)
+	scene.safety_factor_wh()
 }
 
 fn safety_factor_100(pvs :&[PosVel]) -> u32 {
