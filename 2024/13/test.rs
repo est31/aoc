@@ -22,4 +22,5 @@ Prize: X=18641, Y=10279
 fn test_1() {
 	let mch = parse(EXAMPLE_INPUT_1);
 	assert_eq!(480, min_token_counts(&mch));
+	assert_eq!(480, min_token_counts_slow(&mch));
 }

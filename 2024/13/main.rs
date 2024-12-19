@@ -119,10 +119,6 @@ fn ifr(v: i64, w: i64) -> Frac {
 	Frac { v: v * w.signum(), w: w.abs() as u64, }
 }
 
-fn ufr(v: u64, w: u64) -> Frac {
-	Frac { v: v as i64, w }
-}
-
 #[derive(Copy, Clone, Debug)]
 struct Frac {
 	v: i64,
@@ -130,18 +126,6 @@ struct Frac {
 }
 
 impl Frac {
-	fn invert(mut self) -> Self {
-		let sign = self.v.signum();
-		let v = self.v.abs();
-		self.v = self.w as i64 * sign;
-		self.w = v as u64;
-		self
-	}
-	fn mul_by(mut self, mul: u64) -> Self {
-		self.v *= mul as i64;
-		self
-	}
-
 	fn extend_by(&mut self, mul: u64) {
 		self.v *= mul as i64;
 		self.w *= mul;
@@ -157,16 +141,6 @@ impl Frac {
 			return None;
 		}
 		Some((v / self.w) as i64 * self.v.signum())
-	}
-	fn uint_opt(&self) -> Option<u64> {
-		if self.v < 0 {
-			return None;
-		}
-		let v = self.v as u64;
-		if v % self.w != 0 {
-			return None;
-		}
-		Some(v / self.w)
 	}
 }
 
@@ -193,6 +167,7 @@ impl std::ops::Add<Self> for Frac {
 	}
 }
 
+#[cfg(test)]
 fn minimal_token_count_max_100_(m :&Machine) -> Option<(u64, u64)> {
 	dprint!("  -> inner\n");
 	for a_cnt in 0..100 {
@@ -218,6 +193,7 @@ fn minimal_token_count_max_100_(m :&Machine) -> Option<(u64, u64)> {
 	None
 }
 
+#[cfg(test)]
 fn minimal_token_count_max_100_slow(m :&Machine) -> Option<u64> {
 	dprint!("Machine {m:?}\n");
 	let no_swap = minimal_token_count_max_100_(m).map(|(a, b)| a * 3 + b);
