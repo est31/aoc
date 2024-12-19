@@ -157,7 +157,7 @@ fn print_loop_wh(pvs :&[PosVel], width :usize, height :usize) {
 	for sec in 0..secs {
 		scene.one_sec();
 		let qcs = scene.quadrant_counts();
-		{
+		if (qcs[0] + qcs[1])* 2 < (qcs[2] + qcs[3]) {
 			println!("\nAfter sec {}", sec + 1);
 			scene.print();
 		}
