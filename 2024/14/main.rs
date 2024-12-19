@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::str::FromStr;
 
 const INPUT :&str = include_str!("input");
@@ -8,9 +9,10 @@ mod test;
 fn main() {
 	let pvs = parse(INPUT);
 	println!("safety factor after 100 seconds: {}", safety_factor_100(&pvs));
+	print_loop(&pvs);
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 struct PosVel {
 	pos :(i32, i32),
 	vel :(i32, i32),
@@ -37,6 +39,7 @@ fn parse(s :&str) -> Vec<PosVel> {
 		.collect::<Vec<_>>()
 }
 
+#[derive(Clone)]
 struct Scene {
 	pvs :Vec<PosVel>,
 	width :usize,
@@ -44,11 +47,10 @@ struct Scene {
 }
 
 impl Scene {
-	fn safety_factor_wh(&self) -> u32 {
+	fn quadrant_counts(&self) -> [u32; 4] {
 		let mut q_cnts = [0u32; 4];
 		let m_x = self.width as i32 / 2;
 		let m_y = self.height as i32 / 2;
-
 
 		for pv in self.pvs.iter() {
 			use core::cmp::Ordering::*;
@@ -63,7 +65,10 @@ impl Scene {
 			};
 			q_cnts[qi] += 1;
 		}
-		q_cnts.into_iter().product()
+		q_cnts
+	}
+	fn safety_factor_wh(&self) -> u32 {
+		self.quadrant_counts().into_iter().product()
 	}
 
 	fn one_sec(&mut self) {
@@ -73,6 +78,53 @@ impl Scene {
 			pv.pos.0 = pv.pos.0.rem_euclid(self.width as i32);
 			pv.pos.1 = pv.pos.1.rem_euclid(self.height as i32);
 		}
+	}
+	fn print(&self) {
+		let hs = self.pvs.iter()
+			.map(|pv| {
+				(pv.pos.0, pv.pos.1)
+			})
+			.collect::<HashSet<_>>();
+		for y in 0..(self.height as i32) {
+			for x in 0..(self.width as i32) {
+				if hs.contains(&(x, y)) {
+					print!("X");
+				} else {
+					print!(".");
+				}
+			}
+			println!();
+		}
+	}
+	fn secs_until_cycle(&self) -> usize {
+		// https://en.wikipedia.org/wiki/Cycle_detection#Floyd's_tortoise_and_hare
+		let mut tortoise = self.clone();
+		let mut hare = self.clone();
+		loop {
+			tortoise.one_sec();
+			hare.one_sec();
+			hare.one_sec();
+			if tortoise.pvs == hare.pvs {
+				break;
+			}
+		}
+
+		let mut mu = 0;
+		tortoise = self.clone();
+		while tortoise.pvs != hare.pvs {
+			tortoise.one_sec();
+			hare.one_sec();
+			mu += 1;
+		}
+
+		let mut lam = 1;
+		hare = tortoise.clone();
+		hare.one_sec();
+		while tortoise.pvs != hare.pvs {
+			hare.one_sec();
+			lam += 1;
+		}
+		mu + lam
 	}
 }
 
@@ -87,4 +139,21 @@ fn safety_factor_100_wh(pvs :&[PosVel], width :usize, height :usize) -> u32 {
 
 fn safety_factor_100(pvs :&[PosVel]) -> u32 {
 	safety_factor_100_wh(pvs, 101, 103)
+}
+
+fn print_loop_wh(pvs :&[PosVel], width :usize, height :usize) {
+	let mut scene = Scene { pvs: pvs.to_vec(), width, height };
+	let secs = scene.secs_until_cycle();
+	for sec in 0..secs {
+		scene.one_sec();
+		let qcs = scene.quadrant_counts();
+		{
+			println!("\nAfter sec {}", sec + 1);
+			scene.print();
+		}
+	}
+}
+
+fn print_loop(pvs :&[PosVel]) {
+	print_loop_wh(pvs, 101, 103)
 }

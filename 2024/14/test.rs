@@ -19,4 +19,5 @@ p=9,5 v=-3,-3
 fn test_1() {
 	let pvs = parse(EXAMPLE_INPUT_1);
 	assert_eq!(12, safety_factor_100_wh(&pvs, 11, 7));
+	print_loop_wh(&pvs, 11, 7);
 }
