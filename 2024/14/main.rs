@@ -157,7 +157,10 @@ fn print_loop_wh(pvs :&[PosVel], width :usize, height :usize) {
 	for sec in 0..secs {
 		scene.one_sec();
 		let qcs = scene.quadrant_counts();
-		if (qcs[0] + qcs[1])* 2 < (qcs[2] + qcs[3]) {
+		// Usually the christmas tree is not in the center, use that
+		let left_qs = qcs[0] + qcs[1];
+		let right_qs = qcs[2] + qcs[3];
+		if (left_qs * 2 < right_qs) || (left_qs > right_qs * 2) {
 			println!("\nAfter sec {}", sec + 1);
 			scene.print();
 		}
