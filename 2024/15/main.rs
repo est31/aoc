@@ -7,7 +7,7 @@ mod test;
 
 fn main() {
 	let mp = parse(INPUT);
-	//println!("gps coords: {}", mp.sum_gps_coords());
+	println!("gps coords: {}", mp.sum_gps_coords());
 	println!("gps coords widened: {}", mp.sum_gps_coords_widened());
 }
 
@@ -131,7 +131,7 @@ fn coord_in_dir(p: (usize, usize), dir :Cmd) -> (usize, usize) {
 
 macro_rules! dprint {
 	($($args:expr),*) => {
-		//if false
+		if false
 			{ print!($($args),*); }
 	};
 }
@@ -250,9 +250,9 @@ impl Map {
 	fn sum_gps_coords_x_m1(&self) -> u32 {
 		let mut cl = self.clone();
 		for (_i, cmd) in self.commands.iter().enumerate() {
-			println!("Command {_i:03}: {cmd:?}");
+			//println!("Command {_i:03}: {cmd:?}");
 			cl.apply_cmd(*cmd);
-			cl.print();
+			//cl.print();
 		}
 		cl.gps_coord_boxes()
 	}
