@@ -219,8 +219,10 @@ impl Map {
 					sp = np;
 				}
 
-				dprint!("    final upd: {sp:?}({:?}) <- Empty\n", self.fields[sp.1][sp.0]);
-				self.fields[sp.1][sp.0] = Field::Empty;
+				if self.fields[sp.1][sp.0] == Field::Robot {
+					dprint!("    final upd: {sp:?}({:?}) <- Empty\n", self.fields[sp.1][sp.0]);
+					self.fields[sp.1][sp.0] = Field::Empty;
+				}
 
 			}
 			self.robot_pos = coord_in_dir(self.robot_pos, cmd);
