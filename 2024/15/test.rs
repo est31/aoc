@@ -38,13 +38,19 @@ const EXAMPLE_INPUT_2 :&str = "\
 ";
 
 #[test]
-fn test_1() {
+fn test_1_1() {
 	let mp = parse(EXAMPLE_INPUT_1);
 	assert_eq!(10092, mp.sum_gps_coords());
 }
 
 #[test]
-fn test_2() {
+fn test_1_2() {
 	let mp = parse(EXAMPLE_INPUT_2);
 	assert_eq!(2028, mp.sum_gps_coords());
+}
+
+#[test]
+fn test_2_1() {
+	let mp = parse(EXAMPLE_INPUT_1);
+	assert_eq!(9021, mp.sum_gps_coords_widened());
 }
