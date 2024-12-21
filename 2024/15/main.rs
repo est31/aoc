@@ -166,64 +166,60 @@ impl Map {
 			// Walk in normal dir
 			let mut heads = [self.robot_pos].into_iter()
 				.collect::<HashSet<_>>();
-			let mut ends = HashSet::new();
+			let mut list_of_heads = Vec::new();
 
 			// See if we can move the potentially increasing set of heads
 			while !heads.is_empty() {
 				dprint!("heads: {heads:?}\n");
 				let mut new_heads = HashSet::new();
+				let mut hd_cl = heads.clone();
 				for hd in heads.iter() {
 					let at_hd = self.fields[hd.1][hd.0];
 					match at_hd {
 						// We can't continue, there is a wall
 						Field::Wall => return,
 						// Nothing, we end here
-						Field::Empty => {
-							ends.insert(*hd);
-						},
+						Field::Empty => (),
 						Field::Robot | Field::Box_ => {
 							new_heads.insert(coord_in_dir(*hd, cmd));
 						},
 						Field::BoxLeft => {
 							let rhd = (hd.0 + 1, hd.1);
+							hd_cl.insert(rhd);
 							assert_eq!(self.fields[rhd.1][rhd.0], Field::BoxRight);
 							new_heads.insert(coord_in_dir(*hd, cmd));
 							new_heads.insert(coord_in_dir(rhd, cmd));
 						},
 						Field::BoxRight => {
 							let lhd = (hd.0 - 1, hd.1);
+							hd_cl.insert(lhd);
 							assert_eq!(self.fields[lhd.1][lhd.0], Field::BoxLeft);
 							new_heads.insert(coord_in_dir(*hd, cmd));
 							new_heads.insert(coord_in_dir(lhd, cmd));
 						},
 					}
 				}
+				list_of_heads.push(hd_cl);
 				heads = new_heads;
 			}
-			dprint!("ends: {ends:?}\n");
 			// Now, we know that we can move the heads as otherwise we'd have returned
 			let opp = cmd.opposite();
-			for end in ends {
-				let mut sp = end;
-				dprint!("  end: {end:?} is {:?}\n", self.fields[sp.1][sp.0]);
-
-				let np = coord_in_dir(sp, opp);
-				dprint!("    first upd: {sp:?}({:?}) <- {np:?}({:?})\n",  self.fields[sp.1][sp.0], self.fields[np.1][np.0]);
-				self.fields[sp.1][sp.0] = self.fields[np.1][np.0];
-				sp = np;
-
-				while matches!(self.fields[sp.1][sp.0], Field::Box_ | Field::BoxLeft | Field::BoxRight) {
-					let np = coord_in_dir(sp, opp);
-					dprint!("    upd: {sp:?}({:?}) <- {np:?}({:?})\n", self.fields[sp.1][sp.0], self.fields[np.1][np.0]);
-					self.fields[sp.1][sp.0] = self.fields[np.1][np.0];
-					sp = np;
+			list_of_heads.reverse();
+			list_of_heads.push(HashSet::new());
+			for heads_and_next in list_of_heads.windows(2) {
+				let heads = &heads_and_next[0];
+				let heads_next = &heads_and_next[1];
+				dprint!("  heads: {heads:?}\n");
+				for hd in heads {
+					let np = coord_in_dir(*hd, opp);
+					let to_put = if heads_next.contains(&np) {
+						self.fields[np.1][np.0]
+					} else {
+						Field::Empty
+					};
+					dprint!("    upd: {hd:?}({:?}) <- {:?}\n",  self.fields[hd.1][hd.0], to_put);
+					self.fields[hd.1][hd.0] = to_put;
 				}
-
-				if self.fields[sp.1][sp.0] == Field::Robot {
-					dprint!("    final upd: {sp:?}({:?}) <- Empty\n", self.fields[sp.1][sp.0]);
-					self.fields[sp.1][sp.0] = Field::Empty;
-				}
-
 			}
 			self.robot_pos = coord_in_dir(self.robot_pos, cmd);
 		}
@@ -238,35 +234,34 @@ impl Map {
 		}
 		println!();
 	}
-	fn gps_coord_boxes(&self, x_m1 :bool) -> u32 {
+	fn gps_coord_boxes(&self) -> u32 {
 		let mut sum = 0;
-		let sub = if x_m1 { 1 } else { 0 };
 
 		for (y, l) in self.fields.iter().enumerate() {
 			for (x, fld) in l.iter().enumerate() {
-				if !matches!(fld, Field::Box_ ) { continue }
-				let gps_coord = (y as u32 * 100) + x as u32 - sub;
+				if !matches!(fld, Field::Box_ | Field::BoxLeft) { continue }
+				let gps_coord = (y as u32 * 100) + x as u32;
 				dprint!("sum({sum}) += {gps_coord}\n");
 				sum += gps_coord;
 			}
 		}
 		sum
 	}
-	fn sum_gps_coords_x_m1(&self, x_m1 :bool) -> u32 {
+	fn sum_gps_coords_x_m1(&self) -> u32 {
 		let mut cl = self.clone();
 		for (_i, cmd) in self.commands.iter().enumerate() {
 			println!("Command {_i:03}: {cmd:?}");
 			cl.apply_cmd(*cmd);
 			cl.print();
 		}
-		cl.gps_coord_boxes(x_m1)
+		cl.gps_coord_boxes()
 	}
 	fn sum_gps_coords(&self) -> u32 {
-		self.sum_gps_coords_x_m1(false)
+		self.sum_gps_coords_x_m1()
 	}
 	fn sum_gps_coords_widened(&self) -> u32 {
 		let wd = self.widen();
-		wd.sum_gps_coords_x_m1(true)
+		wd.sum_gps_coords_x_m1()
 	}
 	fn widen(&self) -> Map {
 		let fields = self.fields.iter()
