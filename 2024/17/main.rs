@@ -12,9 +12,9 @@ fn main() {
 
 #[derive(Clone, PartialEq, Eq)]
 struct Computer {
-	register_a :i64,
-	register_b :i64,
-	register_c :i64,
+	register_a :u64,
+	register_b :u64,
+	register_c :u64,
 
 	ip :usize,
 	program :Vec<u8>,
@@ -25,7 +25,7 @@ fn parse(s :&str) -> Computer {
 	let reg = (&mut lines).take(3).map(|l| {
 		let mut s = l.split(": ");
 		_ = s.next().unwrap();
-		i64::from_str(s.next().unwrap()).unwrap()
+		u64::from_str(s.next().unwrap()).unwrap()
 	})
 	.collect::<Vec<_>>();
 
@@ -60,9 +60,9 @@ impl Computer {
 			return None;
 		}
 		let opcode = self.program[self.ip];
-		let op_lit = self.program[self.ip + 1] as i64;
+		let op_lit = self.program[self.ip + 1] as u64;
 		let op_combo = match op_lit {
-			0..=3 | 7 => op_lit as i64,
+			0..=3 | 7 => op_lit as u64,
 			4 => self.register_a,
 			5 => self.register_b,
 			6 => self.register_c,
@@ -74,7 +74,7 @@ impl Computer {
 		match opcode {
 			0 => {
 				// adv
-				self.register_a = self.register_a / (1 << op_lit);
+				self.register_a = self.register_a / (1 << op_combo);
 				dprint!("--> adv: a={}\n", self.register_a);
 			},
 			1 => {
