@@ -125,13 +125,16 @@ impl Computer {
 		}
 		Some(output)
 	}
-	fn output_mut(&mut self) -> Vec<u8> {
-		let mut res = Vec::new();
+	fn output_mut_inner(&mut self, v :&mut Vec<u8>) {
 		while let Some(st) = self.step() {
 			if let Some(st) = st {
-				res.push(st);
+				v.push(st);
 			}
 		}
+	}
+	fn output_mut(&mut self) -> Vec<u8> {
+		let mut res = Vec::new();
+		self.output_mut_inner(&mut res);
 		res
 	}
 	fn output(&self) -> String {
