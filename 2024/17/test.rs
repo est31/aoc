@@ -55,6 +55,11 @@ Register C: 0
 
 Program: 0,3,5,4,3,0
 ";
+/*
+adv 3 | A := A / 8
+out A | OUT A % 8
+jnz 0 | REPEAT if A != 0
+*/
 
 
 #[test]
@@ -100,5 +105,6 @@ fn test_1_6() {
 #[test]
 fn test_2_0() {
 	let cmp = parse(EXAMPLE_INPUT_7);
-	assert_eq!(117440, cmp.lowest_a_for_quine());
+	assert_eq!(117440, cmp.lowest_a_for_quine_bf());
+	assert_eq!(117440, cmp.lowest_a_for_quine_build());
 }

@@ -8,7 +8,7 @@ mod test;
 fn main() {
 	let cmp = parse(INPUT);
 	println!("output: {}", cmp.output());
-	println!("lowest A for quine: {}", cmp.lowest_a_for_quine());
+	println!("lowest A for quine: {}", cmp.lowest_a_for_quine_build());
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -144,17 +144,60 @@ impl Computer {
 			.collect::<Vec<_>>()
 			.join(",")
 	}
-	fn lowest_a_for_quine(&self) -> u64 {
+	#[allow(unused)]
+	fn lowest_a_for_quine_bf(&self) -> u64 {
 		let mut cl = self.clone();
+		let mut tmp = Vec::new();
+		let mut largest_len = 0;
 		for a in 0.. {
+			if a % 10_000_000 == 0 {
+				print!("a: {} ll: {largest_len}\n", a / 1_000_000);
+				if a == 10_000_000 {
+					//break;
+				}
+				if largest_len > self.program.len() {
+					break;
+				}
+			}
 			cl.register_a = a;
 			cl.register_b = self.register_b;
 			cl.register_c = self.register_c;
 			cl.ip = self.ip;
-			if &cl.output_mut() == &self.program {
+			cl.output_mut_inner(&mut tmp);
+			largest_len = largest_len.max(tmp.len());
+			if &tmp == &self.program {
 				return a;
 			}
+			tmp.clear();
 		}
 		panic!("not found")
+	}
+	fn lowest_a_for_quine_build(&self) -> u64 {
+		let mut cl = self.clone();
+		let mut tmp = Vec::new();
+		let mut v = 0;
+		let mut mul = 1;
+		'outer: for len in 2..=self.program.len() {
+			for next_a in 0..256 {
+				let a = v + next_a;
+				cl.register_a = a;
+				cl.register_b = self.register_b;
+				cl.register_c = self.register_c;
+				cl.ip = self.ip;
+				tmp.clear();
+				cl.output_mut_inner(&mut tmp);
+				dprint!("    len: {len}, a: {a}, mul: {mul}, tmp: {tmp:?}\n");
+				if len <= tmp.len() && self.program.ends_with(&tmp) {
+					dprint!("        -> continue\n");
+					if tmp.len() == self.program.len() {
+						return a;
+					}
+					v = a * 8;
+					continue 'outer;
+				}
+			}
+			panic!("couldn't find any number to add here. len: {len}");
+		}
+		panic!("not found");
 	}
 }
