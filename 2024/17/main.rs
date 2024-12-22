@@ -124,14 +124,16 @@ impl Computer {
 		}
 		Some(output)
 	}
-	fn output(&self) -> String {
+	fn output_mut(&mut self) -> String {
 		let mut res = Vec::new();
-		let mut cl = self.clone();
-		while let Some(st) = cl.step() {
+		while let Some(st) = self.step() {
 			if let Some(st) = st {
 				res.push(st);
 			}
 		}
 		res.join(",")
+	}
+	fn output(&self) -> String {
+		self.clone().output_mut()
 	}
 }
