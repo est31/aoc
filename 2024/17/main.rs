@@ -49,7 +49,7 @@ fn parse(s :&str) -> Computer {
 
 macro_rules! dprint {
 	($($args:expr),*) => {
-		//if false
+		if false
 			{ print!($($args),*); }
 	};
 }
@@ -109,12 +109,12 @@ impl Computer {
 			},
 			6 => {
 				// bdv
-				self.register_b = self.register_a / (1 << op_lit);
+				self.register_b = self.register_a / (1 << op_combo);
 				dprint!("--> bdv: b={}\n", self.register_b);
 			},
 			7 => {
 				// cdv
-				self.register_c = self.register_a / (1 << op_lit);
+				self.register_c = self.register_a / (1 << op_combo);
 				dprint!("--> cdv: c={}\n", self.register_c);
 			},
 			_ => panic!("Unexpected opcode {opcode}"),
