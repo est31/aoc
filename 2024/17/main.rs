@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let cmp = parse(INPUT);
 	println!("output: {}", cmp.output());
+	println!("lowest A for quine: {}", cmp.lowest_a_for_quine());
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -55,7 +56,7 @@ macro_rules! dprint {
 }
 
 impl Computer {
-	fn step(&mut self) -> Option<Option<String>> {
+	fn step(&mut self) -> Option<Option<u8>> {
 		if self.ip >= self.program.len() {
 			return None;
 		}
@@ -104,7 +105,7 @@ impl Computer {
 			},
 			5 => {
 				// out
-				output = Some(format!("{}", op_combo % 8));
+				output = Some((op_combo % 8) as u8);
 				dprint!("--> out: {}\n", output.clone().unwrap());
 			},
 			6 => {
@@ -124,16 +125,33 @@ impl Computer {
 		}
 		Some(output)
 	}
-	fn output_mut(&mut self) -> String {
+	fn output_mut(&mut self) -> Vec<u8> {
 		let mut res = Vec::new();
 		while let Some(st) = self.step() {
 			if let Some(st) = st {
 				res.push(st);
 			}
 		}
-		res.join(",")
+		res
 	}
 	fn output(&self) -> String {
 		self.clone().output_mut()
+			.into_iter()
+			.map(|v| format!("{v}"))
+			.collect::<Vec<_>>()
+			.join(",")
+	}
+	fn lowest_a_for_quine(&self) -> u64 {
+		let mut cl = self.clone();
+		for a in 0.. {
+			cl.register_a = a;
+			cl.register_b = self.register_b;
+			cl.register_c = self.register_c;
+			cl.ip = self.ip;
+			if &cl.output_mut() == &self.program {
+				return a;
+			}
+		}
+		panic!("not found")
 	}
 }
