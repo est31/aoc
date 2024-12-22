@@ -75,17 +75,17 @@ impl Computer {
 			0 => {
 				// adv
 				self.register_a = self.register_a / (1 << op_lit);
-				dprint!("--> adv: {}\n", self.register_a);
+				dprint!("--> adv: a={}\n", self.register_a);
 			},
 			1 => {
 				// bxl
 				self.register_b = self.register_b ^ op_lit;
-				dprint!("--> bxl: {}\n", self.register_b);
+				dprint!("--> bxl: b={}\n", self.register_b);
 			},
 			2 => {
 				// bst
 				self.register_b = op_combo % 8;
-				dprint!("--> bst: {}\n", self.register_b);
+				dprint!("--> bst: b={}\n", self.register_b);
 			},
 			3 => {
 				// jnz
@@ -100,22 +100,22 @@ impl Computer {
 			4 => {
 				// bxc
 				self.register_b = self.register_b ^ self.register_c;
-				dprint!("--> bxc: {}\n", self.register_b);
+				dprint!("--> bxc: b={}\n", self.register_b);
 			},
 			5 => {
 				// out
-				output = Some(format!("{}", op_combo % 5));
+				output = Some(format!("{}", op_combo % 8));
 				dprint!("--> out: {}\n", output.clone().unwrap());
 			},
 			6 => {
 				// bdv
-				self.register_b = self.register_b / (1 << op_lit);
-				dprint!("--> bdv: {}\n", self.register_b);
+				self.register_b = self.register_a / (1 << op_lit);
+				dprint!("--> bdv: b={}\n", self.register_b);
 			},
 			7 => {
 				// cdv
-				self.register_c = self.register_c / (1 << op_lit);
-				dprint!("--> cdv: {}\n", self.register_c);
+				self.register_c = self.register_a / (1 << op_lit);
+				dprint!("--> cdv: c={}\n", self.register_c);
 			},
 			_ => panic!("Unexpected opcode {opcode}"),
 		}
