@@ -70,39 +70,21 @@ fn is_possile(s :&str, avail :&[String]) -> bool {
 	false
 }
 
-fn get_possile_hm<const EXIT_FIRST :bool>(s :&str, avail_hm :&HashMap<String, Vec<String>>, avail :&[String], at_start :bool) -> u64 {
-	dprint!("    going with '{s}'\n");
+fn count_ending_with<'a>(s :&'a str, avail :&[String], ending_with_count :&mut HashMap<&'a str, u64>) -> u64 {
+	if let Some(e) = ending_with_count.get(s) {
+		return *e;
+	}
+	//dprint!("    going with '{s}'\n");
 	if s.is_empty() {
-		dprint!("    -> TRUE\n");
+		//dprint!("    -> TRUE\n");
 		return 1;
 	}
 	let mut sum = 0;
-	if at_start {
-		let options = if s.len() == 1 {
-			vec![s]
-		} else {
-			vec![&s[..2], &s[..1]]
-		};
-		let avail_hm_it = options.into_iter()
-			.filter_map(|ndl| avail_hm.get(ndl))
-			.map(|v| v.iter())
-			.flatten();
-		for av in avail_hm_it {
-			let Some(s_stripped) = s.strip_prefix(av) else { continue };
-			sum += get_possile_hm::<EXIT_FIRST>(s_stripped, avail_hm, avail, !at_start);
-			if sum > 0 && EXIT_FIRST {
-				return sum;
-			}
-		}
-	} else {
-		for av_end in avail {
-			let Some(s_stripped) = s.strip_suffix(av_end) else { continue };
-			sum += get_possile_hm::<EXIT_FIRST>(s_stripped, avail_hm, avail, !at_start);
-			if sum > 0 && EXIT_FIRST {
-				return sum;
-			}
-		}
+	for av_end in avail {
+		let Some(s_stripped) = s.strip_prefix(av_end) else { continue };
+		sum += count_ending_with(s_stripped, avail, ending_with_count);
 	}
+	ending_with_count.insert(s, sum);
 	sum
 }
 
@@ -111,7 +93,7 @@ impl Towels {
 		self.desired.iter()
 			.filter(|des| {
 				dprint!(" {des}\n");
-				let p = get_possile_hm::<true>(des, &self.avail_w_prefix, &self.avail, false);
+				let p = count_ending_with(des, &self.avail, &mut HashMap::new());
 				dprint!(" --> p: {p}\n");
 				p > 0
 			})
@@ -121,7 +103,7 @@ impl Towels {
 		self.desired.iter()
 			.map(|des| {
 				dprint!(" {des}\n");
-				let p = get_possile_hm::<false>(des, &self.avail_w_prefix, &self.avail, false);
+				let p = count_ending_with(des, &self.avail, &mut HashMap::new());
 				dprint!(" --> p: {p}\n");
 				p
 			})
