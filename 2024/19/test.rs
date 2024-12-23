@@ -37,9 +37,12 @@ fn test_2() {
 	assert_eq!(6, twl.sum_possible());
 
 	twl.desired = vec![desired[4].clone()];
-	assert_eq!(1, twl.sum_possible());
+	assert_eq!(0, twl.sum_possible());
 
 	twl.desired = vec![desired[5].clone()];
+	assert_eq!(1, twl.sum_possible());
+
+	twl.desired = vec![desired[6].clone()];
 	assert_eq!(2, twl.sum_possible());
 
 	twl.desired = desired;

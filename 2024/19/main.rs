@@ -70,32 +70,34 @@ fn is_possile(s :&str, avail :&[String]) -> bool {
 	false
 }
 
-fn get_possile_hm<const EXIT_FIRST :bool>(s :&str, avail_hm :&HashMap<String, Vec<String>>, avail :&[String]) -> u64 {
+fn get_possile_hm<const EXIT_FIRST :bool>(s :&str, avail_hm :&HashMap<String, Vec<String>>, avail :&[String], at_start :bool) -> u64 {
+	dprint!("    going with '{s}'\n");
 	if s.is_empty() {
+		dprint!("    -> TRUE\n");
 		return 1;
 	}
-	let prefix = if s.len() == 1 {
-		s
-	} else {
-		&s[..2]
-	};
-	let first_letter = &s[..1];
-	let avail_hm_it = [prefix, first_letter].into_iter()
-		.filter_map(|ndl| avail_hm.get(ndl))
-		.map(|v| v.iter())
-		.flatten();
 	let mut sum = 0;
-	for av in avail_hm_it {
-		let Some(s_stripped) = s.strip_prefix(av) else { continue };
-		if s_stripped.is_empty() {
-			sum += 1;
+	if at_start {
+		let options = if s.len() == 1 {
+			vec![s]
+		} else {
+			vec![&s[..2], &s[..1]]
+		};
+		let avail_hm_it = options.into_iter()
+			.filter_map(|ndl| avail_hm.get(ndl))
+			.map(|v| v.iter())
+			.flatten();
+		for av in avail_hm_it {
+			let Some(s_stripped) = s.strip_prefix(av) else { continue };
+			sum += get_possile_hm::<EXIT_FIRST>(s_stripped, avail_hm, avail, !at_start);
 			if sum > 0 && EXIT_FIRST {
 				return sum;
 			}
 		}
+	} else {
 		for av_end in avail {
-			let Some(s_stripped) = s_stripped.strip_suffix(av_end) else { continue };
-			sum += get_possile_hm::<EXIT_FIRST>(s_stripped, avail_hm, avail);
+			let Some(s_stripped) = s.strip_suffix(av_end) else { continue };
+			sum += get_possile_hm::<EXIT_FIRST>(s_stripped, avail_hm, avail, !at_start);
 			if sum > 0 && EXIT_FIRST {
 				return sum;
 			}
@@ -109,7 +111,7 @@ impl Towels {
 		self.desired.iter()
 			.filter(|des| {
 				dprint!(" {des}\n");
-				let p = get_possile_hm::<true>(des, &self.avail_w_prefix, &self.avail);
+				let p = get_possile_hm::<true>(des, &self.avail_w_prefix, &self.avail, false);
 				dprint!(" --> p: {p}\n");
 				p > 0
 			})
@@ -119,7 +121,7 @@ impl Towels {
 		self.desired.iter()
 			.map(|des| {
 				dprint!(" {des}\n");
-				let p = get_possile_hm::<false>(des, &self.avail_w_prefix, &self.avail);
+				let p = get_possile_hm::<false>(des, &self.avail_w_prefix, &self.avail, false);
 				dprint!(" --> p: {p}\n");
 				p
 			})
