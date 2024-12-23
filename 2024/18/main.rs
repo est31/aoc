@@ -44,13 +44,6 @@ fn parse_sized(s :&str, size :usize) -> Memory {
 	}
 }
 
-macro_rules! dprint {
-	($($args:expr),*) => {
-		if false
-			{ print!($($args),*); }
-	};
-}
-
 #[inline(always)]
 fn neighs(p: (usize, usize), height :usize, width :usize) -> Vec<(usize, usize)> {
 	let mut neighs = Vec::with_capacity(4);
@@ -79,7 +72,9 @@ impl Memory {
 		for corr in self.corruptions.iter().take(ms) {
 			fields[corr.0][corr.1] = true;
 		}
-
+		self.min_steps_with(&fields)
+	}
+	fn min_steps_with(&self, fields :&[Vec<bool>]) -> Option<usize> {
 		let start_pos = (0, 0);
 		let end_pos = (self.height - 1, self.width - 1);
 
@@ -105,8 +100,10 @@ impl Memory {
 		None
 	}
 	fn first_byte_to_block(&self) -> (usize, usize) {
-		for (v, corr) in self.corruptions.iter().enumerate() {
-			if self.min_steps_after(v + 1).is_none() {
+		let mut fields = vec![vec![false; self.width]; self.height];
+		for corr in self.corruptions.iter() {
+			fields[corr.0][corr.1] = true;
+			if self.min_steps_with(&fields).is_none() {
 				return *corr;
 			}
 		}
