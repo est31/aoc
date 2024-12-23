@@ -9,6 +9,8 @@ mod test;
 fn main() {
 	let mem = parse(INPUT);
 	println!("min steps: {}", mem.min_steps());
+	let btb = mem.first_byte_to_block();
+	println!("first byte to block: {},{}", btb.0, btb.1);
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -69,9 +71,9 @@ fn neighs(p: (usize, usize), height :usize, width :usize) -> Vec<(usize, usize)>
 
 impl Memory {
 	fn min_steps(&self) -> usize {
-		self.min_steps_after(1024)
+		self.min_steps_after(1024).expect("didn't get to end")
 	}
-	fn min_steps_after(&self, ms :usize) -> usize {
+	fn min_steps_after(&self, ms :usize) -> Option<usize> {
 		let mut fields = vec![vec![false; self.width]; self.height];
 
 		for corr in self.corruptions.iter().take(ms) {
@@ -92,7 +94,7 @@ impl Memory {
 				continue;
 			}
 			if pos == end_pos {
-				return cost;
+				return Some(cost);
 			}
 			let neighs = neighs(pos, self.height, self.width);
 			for new_pos in neighs {
@@ -100,6 +102,14 @@ impl Memory {
 			}
 		}
 
-		panic!("didn't get to end")
+		None
+	}
+	fn first_byte_to_block(&self) -> (usize, usize) {
+		for (v, corr) in self.corruptions.iter().enumerate() {
+			if self.min_steps_after(v + 1).is_none() {
+				return *corr;
+			}
+		}
+		panic!("never blocked")
 	}
 }

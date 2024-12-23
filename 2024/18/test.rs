@@ -29,8 +29,14 @@ const EXAMPLE_INPUT_1 :&str = "\
 ";
 
 #[test]
-fn test_1_1() {
+fn test_1() {
 	let mem = parse_sized(EXAMPLE_INPUT_1, 7);
-	assert_eq!(22, mem.min_steps_after(12));
+	assert_eq!(22, mem.min_steps_after(12).unwrap());
+}
+
+#[test]
+fn test_2() {
+	let mem = parse_sized(EXAMPLE_INPUT_1, 7);
+	assert_eq!((6, 1), mem.first_byte_to_block());
 }
 
