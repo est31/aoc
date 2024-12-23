@@ -18,3 +18,9 @@ fn test_1() {
 	let twl = parse(EXAMPLE_INPUT_1);
 	assert_eq!(6, twl.num_possible());
 }
+
+#[test]
+fn test_2() {
+	let twl = parse(EXAMPLE_INPUT_1);
+	assert_eq!(16, twl.sum_possible());
+}

@@ -7,7 +7,8 @@ mod test;
 
 fn main() {
 	let twl = parse(INPUT);
-	println!("num_possible: {}", twl.num_possible());
+	println!("num possible: {}", twl.num_possible());
+	println!("sum possible: {}", twl.sum_possible());
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -69,9 +70,9 @@ fn is_possile(s :&str, avail :&[String]) -> bool {
 	false
 }
 
-fn is_possile_hm(s :&str, avail_hm :&HashMap<String, Vec<String>>, avail :&[String]) -> bool {
+fn get_possile_hm<const EXIT_FIRST :bool>(s :&str, avail_hm :&HashMap<String, Vec<String>>, avail :&[String]) -> u64 {
 	if s.is_empty() {
-		return true;
+		return 1;
 	}
 	let prefix = if s.len() == 1 {
 		s
@@ -83,16 +84,24 @@ fn is_possile_hm(s :&str, avail_hm :&HashMap<String, Vec<String>>, avail :&[Stri
 		.filter_map(|ndl| avail_hm.get(ndl))
 		.map(|v| v.iter())
 		.flatten();
+	let mut sum = 0;
 	for av in avail_hm_it {
 		let Some(s_stripped) = s.strip_prefix(av) else { continue };
+		if s_stripped.is_empty() {
+			sum += 1;
+			if sum > 0 && EXIT_FIRST {
+				return sum;
+			}
+		}
 		for av_end in avail {
 			let Some(s_stripped) = s_stripped.strip_suffix(av_end) else { continue };
-			if is_possile_hm(s_stripped, avail_hm, avail) {
-				return true;
+			sum += get_possile_hm::<EXIT_FIRST>(s_stripped, avail_hm, avail);
+			if sum > 0 && EXIT_FIRST {
+				return sum;
 			}
 		}
 	}
-	false
+	sum
 }
 
 impl Towels {
@@ -100,10 +109,20 @@ impl Towels {
 		self.desired.iter()
 			.filter(|des| {
 				dprint!(" {des}\n");
-				let p = is_possile_hm(des, &self.avail_w_prefix, &self.avail);
+				let p = get_possile_hm::<true>(des, &self.avail_w_prefix, &self.avail);
+				dprint!(" --> p: {p}\n");
+				p > 0
+			})
+			.count()
+	}
+	fn sum_possible(&self) -> u64 {
+		self.desired.iter()
+			.map(|des| {
+				dprint!(" {des}\n");
+				let p = get_possile_hm::<false>(des, &self.avail_w_prefix, &self.avail);
 				dprint!(" --> p: {p}\n");
 				p
 			})
-			.count()
+			.sum()
 	}
 }
