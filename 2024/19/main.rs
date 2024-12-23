@@ -69,7 +69,7 @@ fn is_possile(s :&str, avail :&[String]) -> bool {
 	false
 }
 
-fn is_possile_hm(s :&str, avail_hm :&HashMap<String, Vec<String>>) -> bool {
+fn is_possile_hm(s :&str, avail_hm :&HashMap<String, Vec<String>>, avail :&[String]) -> bool {
 	if s.is_empty() {
 		return true;
 	}
@@ -84,8 +84,10 @@ fn is_possile_hm(s :&str, avail_hm :&HashMap<String, Vec<String>>) -> bool {
 		.map(|v| v.iter())
 		.flatten();
 	for av in avail_hm_it {
-		if let Some(s_stripped) = s.strip_prefix(av) {
-			if is_possile_hm(s_stripped, avail_hm) {
+		let Some(s_stripped) = s.strip_prefix(av) else { continue };
+		for av_end in avail {
+			let Some(s_stripped) = s_stripped.strip_suffix(av_end) else { continue };
+			if is_possile_hm(s_stripped, avail_hm, avail) {
 				return true;
 			}
 		}
@@ -98,7 +100,7 @@ impl Towels {
 		self.desired.iter()
 			.filter(|des| {
 				dprint!(" {des}\n");
-				let p = is_possile_hm(des, &self.avail_w_prefix);
+				let p = is_possile_hm(des, &self.avail_w_prefix, &self.avail);
 				dprint!(" --> p: {p}\n");
 				p
 			})
