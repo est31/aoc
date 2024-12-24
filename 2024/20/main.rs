@@ -104,7 +104,7 @@ fn count_cheats_saving(cost_no_cheat :u32, cheats_db :&HashMap<(Pos, Pos), u32>,
 
 impl Map {
 	fn search(&self) -> u32 {
-		self.shortest_tree()[&self.end_pos].0
+		self.shortest_tree()[&self.end_pos].0 + 1
 	}
 	fn shortest_tree(&self) -> HashMap<Pos, (u32, Pos)> {
 		let mut handled = HashMap::new();
@@ -138,7 +138,7 @@ impl Map {
 
 		let mut r = vec![self.end_pos];
 		let mut last = self.end_pos;
-		while last != self.end_pos {
+		while last != self.start_pos {
 			last = tr[&last].1;
 			r.push(last);
 		}
@@ -149,10 +149,11 @@ impl Map {
 		use std::mem::replace;
 		let path = self.shortest_path();
 		let on_path = path.clone().into_iter().collect::<HashSet<_>>();
+		dprint!("path len no cheats: {}\n", path.len());
 
 		let mut db = HashMap::new();
 		let mut mp = self.clone();
-		for p in path {
+		for p in path.iter().cloned() {
 			for p_n in neighs(p, self.height, self.width) {
 				let p_n_before = replace(&mut mp.fields[p_n.1][p_n.0], Field::Empty);
 				for p_nn in neighs(p, self.height, self.width) {
@@ -161,7 +162,10 @@ impl Map {
 					}
 					let p_nn_before = replace(&mut mp.fields[p_nn.1][p_nn.0], Field::Empty);
 					let cost = mp.search();
-					db.insert((p_n, p_nn), cost);
+					if cost < path.len() as u32 {
+						dprint!("add to db: {cost}\n");
+						db.insert((p_n, p_nn), cost);
+					}
 					mp.fields[p_nn.1][p_nn.0] = p_nn_before;
 
 				}
