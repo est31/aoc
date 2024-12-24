@@ -96,7 +96,7 @@ fn neighs(p: (usize, usize), height :usize, width :usize) -> Vec<(usize, usize)>
 }
 
 #[cfg(test)]
-fn count_cheats_saving(cost_no_cheat :u32, cheats_db :&HashMap<(Pos, Pos), u32>, saving :u32) -> u32 {
+fn count_cheats_saving(cost_no_cheat :u32, cheats_db :&HashMap<Pos, u32>, saving :u32) -> u32 {
 	cheats_db.iter()
 		.filter(|(_, len)| cost_no_cheat - *len == saving)
 		.count() as u32
@@ -145,10 +145,9 @@ impl Map {
 		r.reverse();
 		r
 	}
-	fn make_cheats_db(&self) -> HashMap<(Pos, Pos), u32> {
+	fn make_cheats_db(&self) -> HashMap<Pos, u32> {
 		use std::mem::replace;
 		let path = self.shortest_path();
-		let on_path = path.clone().into_iter().collect::<HashSet<_>>();
 		dprint!("path len no cheats: {}\n", path.len());
 
 		let mut db = HashMap::new();
@@ -156,20 +155,13 @@ impl Map {
 		for p in path.iter().cloned() {
 			for p_n in neighs(p, self.height, self.width) {
 				let p_n_before = replace(&mut mp.fields[p_n.1][p_n.0], Field::Empty);
-				for p_nn in neighs(p, self.height, self.width) {
-					if p_nn == p {
-						continue;
-					}
-					let p_nn_before = replace(&mut mp.fields[p_nn.1][p_nn.0], Field::Empty);
-					let cost = mp.search();
-					if cost < path.len() as u32 {
-						dprint!("add to db: {cost}\n");
-						db.insert((p_n, p_nn), cost);
-					}
-					mp.fields[p_nn.1][p_nn.0] = p_nn_before;
-
+				let cost = mp.search();
+				if cost < path.len() as u32 {
+					dprint!("add to db: {cost}\n");
+					db.insert(p_n, cost);
 				}
 				mp.fields[p_n.1][p_n.0] = p_n_before;
+
 			}
 		}
 		db
