@@ -22,7 +22,7 @@ const EXAMPLE_INPUT_1 :&str = "\
 fn test_1() {
 	let mp = parse(EXAMPLE_INPUT_1);
 	let cost_no_cheat = mp.search();
-	assert_eq!(cost_no_cheat, mp.shortest_path().len() as u32);
+	assert_eq!(cost_no_cheat, mp.shortest_path().len() as u32 - 1);
 	let db = mp.make_cheats_db();
 	assert_eq!(14, count_cheats_saving(cost_no_cheat, &db, 2));
 	assert_eq!(14, count_cheats_saving(cost_no_cheat, &db, 4));

@@ -96,7 +96,7 @@ fn neighs(p: (usize, usize), height :usize, width :usize) -> Vec<(usize, usize)>
 }
 
 #[cfg(test)]
-fn count_cheats_saving(cost_no_cheat :u32, cheats_db :&HashMap<Pos, u32>, saving :u32) -> u32 {
+fn count_cheats_saving(cost_no_cheat :u32, cheats_db :&HashMap<(Pos, Pos), u32>, saving :u32) -> u32 {
 	cheats_db.iter()
 		.filter(|(_, len)| cost_no_cheat - *len == saving)
 		.count() as u32
@@ -104,7 +104,7 @@ fn count_cheats_saving(cost_no_cheat :u32, cheats_db :&HashMap<Pos, u32>, saving
 
 impl Map {
 	fn search(&self) -> u32 {
-		self.shortest_tree()[&self.end_pos].0 + 1
+		self.shortest_tree()[&self.end_pos].0
 	}
 	fn shortest_tree(&self) -> HashMap<Pos, (u32, Pos)> {
 		let mut handled = HashMap::new();
@@ -145,23 +145,34 @@ impl Map {
 		r.reverse();
 		r
 	}
-	fn make_cheats_db(&self) -> HashMap<Pos, u32> {
+	fn make_cheats_db(&self) -> HashMap<(Pos, Pos), u32> {
 		use std::mem::replace;
 		let path = self.shortest_path();
-		dprint!("path len no cheats: {}\n", path.len());
+		let on_path = path.clone().into_iter().collect::<HashSet<_>>();
+		dprint!("path len no cheats: {}\n", path.len() - 1);
+		let inverse_tree = {
+			let mut mp = self.clone();
+			std::mem::swap(&mut mp.end_pos, &mut mp.start_pos);
+			mp.shortest_tree()
+		};
 
 		let mut db = HashMap::new();
 		let mut mp = self.clone();
-		for p in path.iter().cloned() {
+		for (start_cost, p) in path.iter().cloned().enumerate() {
 			for p_n in neighs(p, self.height, self.width) {
-				let p_n_before = replace(&mut mp.fields[p_n.1][p_n.0], Field::Empty);
-				let cost = mp.search();
-				if cost < path.len() as u32 {
-					dprint!("add to db: {cost}\n");
-					db.insert(p_n, cost);
+				if on_path.contains(&p_n) { continue }
+				//if self.fields[p_n.1][p_n.0] != Field::Wall { continue }
+				for p_nn in neighs(p_n, self.height, self.width) {
+					//if self.fields[p_nn.1][p_nn.0] == Field::Wall { continue }
+					let Some(inv_entry) = inverse_tree.get(&p_nn) else { continue };
+					if p_nn == p { continue; }
+					let rest_cost = inv_entry.0;
+					let cost = start_cost as u32 + rest_cost + 2;
+					if cost < path.len() as u32 - 1 {
+						dprint!("add to db {p_n:?}->{p_nn:?}: {cost}\n");
+						db.insert((p_n, p_nn), cost);
+					}
 				}
-				mp.fields[p_n.1][p_n.0] = p_n_before;
-
 			}
 		}
 		db
