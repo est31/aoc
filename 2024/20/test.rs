@@ -81,3 +81,25 @@ fn test_neighs_manhattan() {
 	// Partially cut off
 	assert_eq!(tm(c, 3, &neighs_manhattan(c, 101, 101, 3)), 24 - 9);
 }
+
+#[test]
+fn test_2() {
+	let mp = parse(EXAMPLE_INPUT_1);
+	let cost_no_cheat = mp.search();
+	assert_eq!(cost_no_cheat, mp.shortest_path().len() as u32 - 1);
+	let db = mp.make_cheats_db_long();
+	assert_eq!(32, count_cheats_saving(cost_no_cheat, &db, 50));
+	assert_eq!(31, count_cheats_saving(cost_no_cheat, &db, 52));
+	assert_eq!(29, count_cheats_saving(cost_no_cheat, &db, 54));
+	assert_eq!(39, count_cheats_saving(cost_no_cheat, &db, 56));
+	assert_eq!(25, count_cheats_saving(cost_no_cheat, &db, 58));
+	assert_eq!(23, count_cheats_saving(cost_no_cheat, &db, 60));
+	assert_eq!(20, count_cheats_saving(cost_no_cheat, &db, 62));
+	assert_eq!(19, count_cheats_saving(cost_no_cheat, &db, 64));
+	assert_eq!(12, count_cheats_saving(cost_no_cheat, &db, 66));
+	assert_eq!(14, count_cheats_saving(cost_no_cheat, &db, 68));
+	assert_eq!(12, count_cheats_saving(cost_no_cheat, &db, 70));
+	assert_eq!(22, count_cheats_saving(cost_no_cheat, &db, 72));
+	assert_eq!(4, count_cheats_saving(cost_no_cheat, &db, 74));
+	assert_eq!(3, count_cheats_saving(cost_no_cheat, &db, 76));
+}
