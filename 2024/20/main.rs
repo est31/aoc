@@ -172,7 +172,6 @@ impl Map {
 	}
 	fn make_cheats_db_dist(&self, max_cheat_dist :usize) -> HashMap<(Pos, Pos), u32> {
 		let path = self.shortest_path();
-		let on_path = path.clone().into_iter().collect::<HashSet<_>>();
 		dprint!("path len no cheats: {}\n", path.len() - 1);
 		let inverse_tree = {
 			let mut mp = self.clone();
@@ -182,17 +181,14 @@ impl Map {
 
 		let mut db = HashMap::new();
 		for (start_cost, p) in path.iter().cloned().enumerate() {
-			for p_n in neighs(p, self.height, self.width) {
-				//if on_path.contains(&p_n) { continue }
-				for (p_nn, dist) in neighs_manhattan(p_n, self.height, self.width, max_cheat_dist - 1) {
-					let Some(inv_entry) = inverse_tree.get(&p_nn) else { continue };
-					if p_nn == p { continue; }
-					let rest_cost = inv_entry.0;
-					let cost = start_cost as u32 + rest_cost + dist as u32 + 1;
-					if cost < path.len() as u32 - 1 {
-						dprint!("add to db {p_n:?}->{p_nn:?}: {start_cost} + {rest_cost} + {dist} = {cost}\n");
-						db.insert((p, p_nn), cost);
-					}
+			for (p_nn, dist) in neighs_manhattan(p, self.height, self.width, max_cheat_dist) {
+				let Some(inv_entry) = inverse_tree.get(&p_nn) else { continue };
+				if p_nn == p { continue; }
+				let rest_cost = inv_entry.0;
+				let cost = start_cost as u32 + rest_cost + dist as u32;
+				if cost < path.len() as u32 - 1 {
+					dprint!("add to db {p:?}->{p_nn:?}: {start_cost} + {rest_cost} + {dist} = {cost}\n");
+					db.insert((p, p_nn), cost);
 				}
 			}
 		}
