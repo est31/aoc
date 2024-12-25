@@ -96,15 +96,17 @@ fn neighs(p: (usize, usize), height :usize, width :usize) -> Vec<(usize, usize)>
 }
 
 #[inline(always)]
-fn neighs_manhattan(p: Pos, height :usize, width :usize, manh_size :usize) -> Vec<(Pos, usize)> {
+fn neighs_manhattan(p: Pos, height :usize, width :usize, radius :usize) -> Vec<(Pos, usize)> {
 	let mut neighs = Vec::new();
-	for y in (p.0.saturating_sub(manh_size))..=(width.min(p.0 + manh_size)) {
+	if p.0 >= width || p.1 >= height {
+		panic!("pos {p:?} out of bounds");
+	}
+	for y in (p.0.saturating_sub(radius))..=((width - 1).min(p.0 + radius)) {
 		let d = (p.0 as isize - y as isize).abs() as usize;
-		let lim = manh_size - d;
-		for x in p.1.saturating_sub(lim)..=(height.min(p.1 + lim)) {
+		let lim = radius - d;
+		for x in p.1.saturating_sub(lim)..=((height - 1).min(p.1 + lim)) {
 			let xd = (p.1 as isize - x as isize).abs() as usize;
 			if (y, x) == p { continue }
-			dprint!("add: {:?}\n", (y, x, d));
 			neighs.push(((y, x), d + xd));
 		}
 	}
