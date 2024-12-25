@@ -95,6 +95,22 @@ fn neighs(p: (usize, usize), height :usize, width :usize) -> Vec<(usize, usize)>
 	neighs
 }
 
+#[inline(always)]
+fn neighs_manhattan(p: Pos, height :usize, width :usize, manh_size :usize) -> Vec<(Pos, usize)> {
+	let mut neighs = Vec::new();
+	for y in (p.0.saturating_sub(manh_size))..=(width.min(p.0 + manh_size)) {
+		let d = (p.0 as isize - y as isize).abs() as usize;
+		let lim = manh_size - d;
+		for x in p.1.saturating_sub(lim)..=(height.min(p.1 + lim)) {
+			let xd = (p.1 as isize - x as isize).abs() as usize;
+			if (y, x) == p { continue }
+			dprint!("add: {:?}\n", (y, x, d));
+			neighs.push(((y, x), d + xd));
+		}
+	}
+	neighs
+}
+
 #[cfg(test)]
 fn count_cheats_saving(cost_no_cheat :u32, cheats_db :&HashMap<(Pos, Pos), u32>, saving :u32) -> u32 {
 	cheats_db.iter()

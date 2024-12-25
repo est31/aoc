@@ -37,3 +37,15 @@ fn test_1() {
 	assert_eq!(1, count_cheats_saving(cost_no_cheat, &db, 64));
 }
 
+#[test]
+fn test_neighs_manhattan() {
+	let c = (10, 100);
+	fn tm(c :Pos, positions :&[(Pos, usize)]) -> usize {
+		let pos_set = positions.iter().collect::<HashSet<_>>();
+		assert_eq!(pos_set.len(), positions.len());
+		positions.len()
+	}
+	assert_eq!(tm(c, &neighs_manhattan(c, 1000, 1000, 1)), 4);
+	assert_eq!(tm(c, &neighs_manhattan(c, 1000, 1000, 2)), 12);
+	assert_eq!(tm(c, &neighs_manhattan(c, 1000, 1000, 3)), 24);
+}
