@@ -1,4 +1,5 @@
 use super::*;
+use std::collections::HashSet;
 
 const EXAMPLE_INPUT_1 :&str = "\
 ###############
