@@ -162,7 +162,6 @@ impl Map {
 		r
 	}
 	fn make_cheats_db(&self) -> HashMap<(Pos, Pos), u32> {
-		use std::mem::replace;
 		let path = self.shortest_path();
 		let on_path = path.clone().into_iter().collect::<HashSet<_>>();
 		dprint!("path len no cheats: {}\n", path.len() - 1);
@@ -173,19 +172,16 @@ impl Map {
 		};
 
 		let mut db = HashMap::new();
-		let mut mp = self.clone();
 		for (start_cost, p) in path.iter().cloned().enumerate() {
 			for p_n in neighs(p, self.height, self.width) {
 				if on_path.contains(&p_n) { continue }
-				//if self.fields[p_n.1][p_n.0] != Field::Wall { continue }
-				for p_nn in neighs(p_n, self.height, self.width) {
-					//if self.fields[p_nn.1][p_nn.0] == Field::Wall { continue }
+				for (p_nn, dist) in neighs_manhattan(p_n, self.height, self.width, 1) {
 					let Some(inv_entry) = inverse_tree.get(&p_nn) else { continue };
 					if p_nn == p { continue; }
 					let rest_cost = inv_entry.0;
-					let cost = start_cost as u32 + rest_cost + 2;
+					let cost = start_cost as u32 + rest_cost + dist as u32 + 1;
 					if cost < path.len() as u32 - 1 {
-						dprint!("add to db {p_n:?}->{p_nn:?}: {cost}\n");
+						dprint!("add to db {p_n:?}->{p_nn:?}: {start_cost} + {rest_cost} + {dist} = {cost}\n");
 						db.insert((p_n, p_nn), cost);
 					}
 				}
