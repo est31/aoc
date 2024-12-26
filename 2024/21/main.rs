@@ -172,17 +172,17 @@ fn shortest_for<T :Coord>(code :&[T]) -> Vec<Pos> {
 		but still after the left button.
 		*/
 		// Go left first if possible
-		if x_cmd == Some(Pos::Left) && (coord_from.0, coord_to.1) != T::EMPTY_POS {
+		if x_cmd == Some(Pos::Left) && (coord_to.0, coord_from.1) != T::EMPTY_POS {
 			add(&mut cmds, x_cmd, x_cnt);
 			add(&mut cmds, y_cmd, y_cnt);
 		}
 		// If not, try to go down first
-		else if y_cmd == Some(Pos::Down) {
+		else if y_cmd == Some(Pos::Down) && (coord_from.0, coord_to.1) != T::EMPTY_POS {
 			add(&mut cmds, y_cmd, y_cnt);
 			add(&mut cmds, x_cmd, x_cnt);
 		}
 		// Outside of these preferences, it doesn't matter, do something safe.
-		else if (coord_from.0, coord_to.1) != T::EMPTY_POS {
+		else if (coord_to.0, coord_from.1) != T::EMPTY_POS {
 			add(&mut cmds, x_cmd, x_cnt);
 			add(&mut cmds, y_cmd, y_cnt);
 		} else {
@@ -195,10 +195,45 @@ fn shortest_for<T :Coord>(code :&[T]) -> Vec<Pos> {
 	cmds
 }
 
+fn print_codes(code: &[PosNum], code_0 :&[Pos], code_1 :&[Pos], code_2 :&[Pos]) {
+	let mut c = code.iter();
+	let mut c0 = code_0.iter();
+	let mut c1 = code_1.iter();
+	let mut c2 = code_2.iter();
+
+	let mut strs = [const {String::new() }; 4];
+
+	while let Some(c2) = c2.next() {
+		strs[3] += &format!("{c2}");
+		if *c2 == Pos::A {
+			let c1 = c1.next().unwrap();
+			strs[2] += &format!("{c1}");
+			if *c1 == Pos::A {
+				let c0 = c0.next().unwrap();
+				strs[1] += &format!("{c0}");
+				if *c0 == Pos::A {
+					let c = c.next().unwrap();
+					strs[0] += &format!("{c}");
+				} else {
+					strs[..1].iter_mut().for_each(|s| *s += " ");
+				}
+			} else {
+				strs[..2].iter_mut().for_each(|s| *s += " ");
+			}
+		} else {
+			strs[..3].iter_mut().for_each(|s| *s += " ");
+		}
+	}
+	for s in strs {
+		dprint!("{s}\n");
+	}
+}
+
 fn shortest_press_seq(code :&[PosNum]) -> Vec<Pos> {
 	let code_0 = shortest_for(code);
 	let code_1 = shortest_for(&code_0);
 	let final_code = shortest_for(&code_1);
+	print_codes(code, &code_0, &code_1, &final_code);
 	final_code
 }
 
