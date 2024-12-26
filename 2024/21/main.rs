@@ -175,8 +175,7 @@ fn shortest_remote_one(code :&[Pos]) -> Vec<Pos> {
 fn shortest_press_seq(code :&[PosNum]) -> Vec<Pos> {
 	let code_0 = shortest_for_pos_num(code);
 	let code_1 = shortest_remote_one(&code_0);
-	let code_2 = shortest_remote_one(&code_1);
-	let final_code = shortest_remote_one(&code_2);
+	let final_code = shortest_remote_one(&code_1);
 	final_code
 }
 

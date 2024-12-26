@@ -17,5 +17,9 @@ fn test_1() {
 	assert_eq!(code_to_num(&cds[3]), 456);
 	assert_eq!(code_to_num(&cds[4]), 379);
 	assert_eq!(shortest_press_seq(&cds[0]).len(), 68);
+	assert_eq!(shortest_press_seq(&cds[1]).len(), 60);
+	assert_eq!(shortest_press_seq(&cds[2]).len(), 68);
+	assert_eq!(shortest_press_seq(&cds[3]).len(), 64);
+	assert_eq!(shortest_press_seq(&cds[4]).len(), 64);
 	assert_eq!(sum_complexities(&cds), 126384);
 }
