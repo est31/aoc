@@ -28,8 +28,8 @@ impl PosNum {
 			PosNum::Digit(5) => (1, 1),
 			PosNum::Digit(6) => (2, 1),
 			PosNum::Digit(7) => (0, 0),
-			PosNum::Digit(8) => (0, 0),
-			PosNum::Digit(9) => (0, 0),
+			PosNum::Digit(8) => (1, 0),
+			PosNum::Digit(9) => (2, 0),
 			PosNum::Digit(_) => panic!("Invalid digit"),
 		}
 	}
@@ -93,11 +93,14 @@ macro_rules! dprint {
 
 fn shortest_for_pos_num(code :&[PosNum]) -> Vec<Pos> {
 	let mut cmds = Vec::new();
+	let mut code = code.to_vec();
+	code.insert(0, PosNum::A);
 	for wnd in code.windows(2) {
 		let cd_from = wnd[0];
 		let cd_to = wnd[1];
 		let coord_from = cd_from.coord();
 		let coord_to = cd_to.coord();
+		dprint!("    {cd_from:?}->{cd_to:?}: {coord_from:?}->{coord_to:?}\n");
 		let x_cmds = match coord_from.0.cmp(&coord_to.0) {
 			Ordering::Less => {
 				vec![Pos::Right; (coord_to.0 - coord_from.0) as usize]
@@ -114,7 +117,9 @@ fn shortest_for_pos_num(code :&[PosNum]) -> Vec<Pos> {
 				cmds.extend_from_slice(&x_cmds);
 				cmds.extend_from_slice(&vec![Pos::Down; (coord_to.1 - coord_from.1) as usize]);
 			}
-			Ordering::Equal => (),
+			Ordering::Equal => {
+				cmds.extend_from_slice(&x_cmds);
+			}
 			Ordering::Greater => {
 				cmds.extend_from_slice(&vec![Pos::Up; (coord_from.1 - coord_to.1) as usize]);
 				cmds.extend_from_slice(&x_cmds);
@@ -128,11 +133,14 @@ fn shortest_for_pos_num(code :&[PosNum]) -> Vec<Pos> {
 
 fn shortest_remote_one(code :&[Pos]) -> Vec<Pos> {
 	let mut cmds = Vec::new();
+	let mut code = code.to_vec();
+	code.insert(0, Pos::A);
 	for wnd in code.windows(2) {
 		let cd_from = wnd[0];
 		let cd_to = wnd[1];
 		let coord_from = cd_from.coord();
 		let coord_to = cd_to.coord();
+		dprint!("    {cd_from} TO {cd_to}: {coord_from:?}->{coord_to:?}");
 		let x_cmds = match coord_from.0.cmp(&coord_to.0) {
 			Ordering::Less => {
 				vec![Pos::Right; (coord_to.0 - coord_from.0) as usize]
@@ -144,12 +152,15 @@ fn shortest_remote_one(code :&[Pos]) -> Vec<Pos> {
 				vec![Pos::Left; (coord_from.0 - coord_to.0) as usize]
 			}
 		};
+		dprint!("; x_cmds: {}\n", x_cmds.iter().map(|s| format!("{s}")).collect::<String>());
 		match coord_from.1.cmp(&coord_to.1) {
 			Ordering::Less => {
 				cmds.extend_from_slice(&vec![Pos::Down; (coord_to.1 - coord_from.1) as usize]);
 				cmds.extend_from_slice(&x_cmds);
 			}
-			Ordering::Equal => (),
+			Ordering::Equal => {
+				cmds.extend_from_slice(&x_cmds);
+			},
 			Ordering::Greater => {
 				cmds.extend_from_slice(&x_cmds);
 				cmds.extend_from_slice(&vec![Pos::Up; (coord_from.1 - coord_to.1) as usize]);
