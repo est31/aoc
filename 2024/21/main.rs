@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::cmp::Ordering;
 
 const INPUT :&str = include_str!("input");
@@ -7,7 +8,8 @@ mod test;
 
 fn main() {
 	let cds = parse(INPUT);
-	println!("sum of complexities: {}", sum_complexities(&cds));
+	println!("sum of complexities 4: {}", sum_complexities(&cds));
+	println!("sum of complexities 27: {}", sum_complexities_27(&cds));
 }
 
 trait Coord: Copy + Clone + std::fmt::Display + PartialEq + Eq {
@@ -60,6 +62,16 @@ enum Pos {
 	Left,
 	Down,
 	Right,
+}
+
+impl Pos {
+	const POSSIBLE :&[Pos] = &[
+		Pos::Up,
+		Pos::A,
+		Pos::Left,
+		Pos::Down,
+		Pos::Right,
+	];
 }
 
 impl Coord for Pos {
@@ -244,6 +256,34 @@ fn shortest_press_seq(code :&[PosNum]) -> Vec<Pos> {
 	final_code
 }
 
+fn shortest_press_seq_len(code :&[PosNum], num_robot_kp :u8) -> u64 {
+	let code_0 = shortest_for(code);
+	let last_level_id = num_robot_kp - 1;
+	let mut hm = HashMap::<((Pos, Pos), u8), u64>::new();
+	for l in 0..=last_level_id {
+		for cd_from in Pos::POSSIBLE {
+			for cd_to in Pos::POSSIBLE {
+				let mut cmds = Vec::new();
+				add_transition(&mut cmds, *cd_from, *cd_to);
+				let cost = transitions_for(&cmds)
+					.map(|(cd_from, cd_to)| {
+						if l == 0 {
+							1
+						} else {
+							hm[&((cd_from, cd_to), l - 1)]
+						}
+					})
+					.sum();
+				hm.insert(((*cd_from, *cd_to), l), cost);
+			}
+		}
+	}
+	transitions_for(&code_0).map(|(cd_from, cd_to)| {
+		hm[&((cd_from, cd_to), last_level_id)]
+	})
+	.sum()
+}
+
 fn code_to_num(code :&[PosNum]) -> u32 {
 	let mut r = 0;
 	for v in code.iter() {
@@ -261,5 +301,15 @@ fn complexity(code :&[PosNum]) -> u32 {
 fn sum_complexities(list :&[Vec<PosNum>]) -> u32 {
 	list.iter()
 		.map(|c| complexity(c))
+		.sum()
+}
+
+fn complexity_n(code :&[PosNum], num_robot_kp :u8) -> u64 {
+	shortest_press_seq_len(code, num_robot_kp) * code_to_num(code) as u64
+}
+
+fn sum_complexities_27(list :&[Vec<PosNum>]) -> u64 {
+	list.iter()
+		.map(|c| complexity_n(c, 25))
 		.sum()
 }

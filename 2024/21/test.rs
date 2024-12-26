@@ -27,3 +27,13 @@ fn test_1() {
 	assert_eq!(shortest_press_seq(&cds[4]).len(), 64);
 	assert_eq!(sum_complexities(&cds), 126384);
 }
+
+#[test]
+fn test_2() {
+	let cds = parse(EXAMPLE_INPUT_1);
+	assert_eq!(shortest_press_seq_len(&cds[0], 2), 68);
+	assert_eq!(shortest_press_seq_len(&cds[1], 2), 60);
+	assert_eq!(shortest_press_seq_len(&cds[2], 2), 68);
+	assert_eq!(shortest_press_seq_len(&cds[3], 2), 64);
+	assert_eq!(shortest_press_seq_len(&cds[4], 2), 64);
+}
