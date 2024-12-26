@@ -115,6 +115,77 @@ fn dcmds(code :&[Pos]) -> String {
 	code.iter().map(|s| format!("{s}")).collect::<String>()
 }
 
+fn add_transition<T :Coord>(cmds :&mut Vec<Pos>, cd_from :T, cd_to :T) {
+	let coord_from = cd_from.coord();
+	let coord_to = cd_to.coord();
+	dprint!("    {cd_from} TO {cd_to}: {coord_from:?}->{coord_to:?}");
+	let (x_cmd, x_cnt) = match coord_from.0.cmp(&coord_to.0) {
+		Ordering::Less => {
+			(Some(Pos::Right), (coord_to.0 - coord_from.0) as usize)
+		}
+		Ordering::Equal => {
+			(None, 0)
+		}
+		Ordering::Greater => {
+			(Some(Pos::Left), (coord_from.0 - coord_to.0) as usize)
+		}
+	};
+	let (y_cmd, y_cnt) = match coord_from.1.cmp(&coord_to.1) {
+		Ordering::Less => {
+			(Some(Pos::Down), (coord_to.1 - coord_from.1) as usize)
+		}
+		Ordering::Equal => (None, 0),
+		Ordering::Greater => {
+			(Some(Pos::Up), (coord_from.1 - coord_to.1) as usize)
+		}
+	};
+	dprint!("; x_cmd: {x_cmd:?}{x_cnt}; y_cmds: {y_cmd:?}{y_cnt}\n");
+	let add = |vec :&mut Vec<_>, v :Option<Pos>, cnt :usize| {
+		if let Some(v) = v {
+			vec.extend_from_slice(&vec![v; cnt]);
+		}
+	};
+	/*
+	Try to go left first, unless it can't be done:
+	the < button is very far from the other buttons, and one needs to
+	press < to get to it from A. If one does v<A for example, one needs to
+	do v<A<A>>^A, and for <vA one needs to do v<<A>A>^A.
+	------------------------
+							v
+			v       <       A
+		v <  A   <   A >>  ^ A
+	v<A<A>>Av<<A>>^AvAA<^A>A
+	------------------------
+	------------------------
+						v
+				<   v     A
+		v <<   A > A > ^ A
+	<vA<AA>>^AvA^AvA<A>A
+	------------------------
+	Same goes for the down button: try to put it first if possible,
+	but still after the left button.
+	*/
+	// Go left first if possible
+	if x_cmd == Some(Pos::Left) && (coord_to.0, coord_from.1) != T::EMPTY_POS {
+		add(cmds, x_cmd, x_cnt);
+		add(cmds, y_cmd, y_cnt);
+	}
+	// If not, try to go down first
+	else if y_cmd == Some(Pos::Down) && (coord_from.0, coord_to.1) != T::EMPTY_POS {
+		add(cmds, y_cmd, y_cnt);
+		add(cmds, x_cmd, x_cnt);
+	}
+	// Outside of these preferences, it doesn't matter, do something safe.
+	else if (coord_to.0, coord_from.1) != T::EMPTY_POS {
+		add(cmds, x_cmd, x_cnt);
+		add(cmds, y_cmd, y_cnt);
+	} else {
+		add(cmds, y_cmd, y_cnt);
+		add(cmds, x_cmd, x_cnt);
+	}
+	cmds.push(Pos::A);
+}
+
 fn shortest_for<T :Coord>(code :&[T]) -> Vec<Pos> {
 	let mut cmds = Vec::new();
 	let mut code = code.to_vec();
@@ -122,74 +193,7 @@ fn shortest_for<T :Coord>(code :&[T]) -> Vec<Pos> {
 	for wnd in code.windows(2) {
 		let cd_from = wnd[0];
 		let cd_to = wnd[1];
-		let coord_from = cd_from.coord();
-		let coord_to = cd_to.coord();
-		dprint!("    {cd_from} TO {cd_to}: {coord_from:?}->{coord_to:?}");
-		let (x_cmd, x_cnt) = match coord_from.0.cmp(&coord_to.0) {
-			Ordering::Less => {
-				(Some(Pos::Right), (coord_to.0 - coord_from.0) as usize)
-			}
-			Ordering::Equal => {
-				(None, 0)
-			}
-			Ordering::Greater => {
-				(Some(Pos::Left), (coord_from.0 - coord_to.0) as usize)
-			}
-		};
-		let (y_cmd, y_cnt) = match coord_from.1.cmp(&coord_to.1) {
-			Ordering::Less => {
-				(Some(Pos::Down), (coord_to.1 - coord_from.1) as usize)
-			}
-			Ordering::Equal => (None, 0),
-			Ordering::Greater => {
-				(Some(Pos::Up), (coord_from.1 - coord_to.1) as usize)
-			}
-		};
-		dprint!("; x_cmd: {x_cmd:?}{x_cnt}; y_cmds: {y_cmd:?}{y_cnt}\n");
-		let add = |vec :&mut Vec<_>, v :Option<Pos>, cnt :usize| {
-			if let Some(v) = v {
-				vec.extend_from_slice(&vec![v; cnt]);
-			}
-		};
-		/*
-		Try to go left first, unless it can't be done:
-		the < button is very far from the other buttons, and one needs to
-		press < to get to it from A. If one does v<A for example, one needs to
-		do v<A<A>>^A, and for <vA one needs to do v<<A>A>^A.
-		------------------------
-		                       v
-		       v       <       A
-		  v <  A   <   A >>  ^ A
-		v<A<A>>Av<<A>>^AvAA<^A>A
-		------------------------
-		------------------------
-		                   v
-		         <   v     A
-		  v <<   A > A > ^ A
-		<vA<AA>>^AvA^AvA<A>A
-		------------------------
-		Same goes for the down button: try to put it first if possible,
-		but still after the left button.
-		*/
-		// Go left first if possible
-		if x_cmd == Some(Pos::Left) && (coord_to.0, coord_from.1) != T::EMPTY_POS {
-			add(&mut cmds, x_cmd, x_cnt);
-			add(&mut cmds, y_cmd, y_cnt);
-		}
-		// If not, try to go down first
-		else if y_cmd == Some(Pos::Down) && (coord_from.0, coord_to.1) != T::EMPTY_POS {
-			add(&mut cmds, y_cmd, y_cnt);
-			add(&mut cmds, x_cmd, x_cnt);
-		}
-		// Outside of these preferences, it doesn't matter, do something safe.
-		else if (coord_to.0, coord_from.1) != T::EMPTY_POS {
-			add(&mut cmds, x_cmd, x_cnt);
-			add(&mut cmds, y_cmd, y_cnt);
-		} else {
-			add(&mut cmds, y_cmd, y_cnt);
-			add(&mut cmds, x_cmd, x_cnt);
-		}
-		cmds.push(Pos::A);
+		add_transition(&mut cmds, cd_from, cd_to);
 	}
 	dprint!("robot cmds: {}\n", dcmds(&cmds));
 	cmds
