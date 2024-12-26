@@ -10,13 +10,22 @@ fn main() {
 	println!("sum of complexities: {}", sum_complexities(&cds));
 }
 
+trait Coord: Copy + Clone + std::fmt::Display + PartialEq + Eq {
+	const EMPTY_POS: (i8, i8);
+	const A: Self;
+	fn coord(&self) -> (i8, i8);
+
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 enum PosNum {
 	Digit(u8),
 	A,
 }
 
-impl PosNum {
+impl Coord for PosNum {
+	const EMPTY_POS: (i8, i8) = (0, 3);
+	const A :Self = PosNum::A;
 	fn coord(&self) -> (i8, i8) {
 		match self {
 			PosNum::Digit(0) => (1, 3),
@@ -35,6 +44,15 @@ impl PosNum {
 	}
 }
 
+impl std::fmt::Display for PosNum {
+	fn fmt(&self, f :&mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+		match self {
+			PosNum::A => write!(f, "A"),
+			PosNum::Digit(n) => write!(f, "{n}"),
+		}
+	}
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 enum Pos {
 	Up,
@@ -44,7 +62,9 @@ enum Pos {
 	Right,
 }
 
-impl Pos {
+impl Coord for Pos {
+	const EMPTY_POS :(i8, i8) = (0, 0);
+	const A :Self = Pos::A;
 	fn coord(&self) -> (i8, i8) {
 		match self {
 			Pos::Up => (1, 0),
@@ -91,91 +111,94 @@ macro_rules! dprint {
 	};
 }
 
-fn shortest_for_pos_num(code :&[PosNum]) -> Vec<Pos> {
-	let mut cmds = Vec::new();
-	let mut code = code.to_vec();
-	code.insert(0, PosNum::A);
-	for wnd in code.windows(2) {
-		let cd_from = wnd[0];
-		let cd_to = wnd[1];
-		let coord_from = cd_from.coord();
-		let coord_to = cd_to.coord();
-		dprint!("    {cd_from:?}->{cd_to:?}: {coord_from:?}->{coord_to:?}\n");
-		let x_cmds = match coord_from.0.cmp(&coord_to.0) {
-			Ordering::Less => {
-				vec![Pos::Right; (coord_to.0 - coord_from.0) as usize]
-			}
-			Ordering::Equal => {
-				vec![]
-			}
-			Ordering::Greater => {
-				vec![Pos::Left; (coord_from.0 - coord_to.0) as usize]
-			}
-		};
-		match coord_from.1.cmp(&coord_to.1) {
-			Ordering::Less => {
-				cmds.extend_from_slice(&x_cmds);
-				cmds.extend_from_slice(&vec![Pos::Down; (coord_to.1 - coord_from.1) as usize]);
-			}
-			Ordering::Equal => {
-				cmds.extend_from_slice(&x_cmds);
-			}
-			Ordering::Greater => {
-				cmds.extend_from_slice(&vec![Pos::Up; (coord_from.1 - coord_to.1) as usize]);
-				cmds.extend_from_slice(&x_cmds);
-			}
-		};
-		cmds.push(Pos::A);
-	}
-	dprint!("numpad cmds: {}\n", cmds.iter().map(|s| format!("{s}")).collect::<String>());
-	cmds
+fn dcmds(code :&[Pos]) -> String {
+	code.iter().map(|s| format!("{s}")).collect::<String>()
 }
 
-fn shortest_remote_one(code :&[Pos]) -> Vec<Pos> {
+fn shortest_for<T :Coord>(code :&[T]) -> Vec<Pos> {
 	let mut cmds = Vec::new();
 	let mut code = code.to_vec();
-	code.insert(0, Pos::A);
+	code.insert(0, T::A);
 	for wnd in code.windows(2) {
 		let cd_from = wnd[0];
 		let cd_to = wnd[1];
 		let coord_from = cd_from.coord();
 		let coord_to = cd_to.coord();
 		dprint!("    {cd_from} TO {cd_to}: {coord_from:?}->{coord_to:?}");
-		let x_cmds = match coord_from.0.cmp(&coord_to.0) {
+		let (x_cmd, x_cnt) = match coord_from.0.cmp(&coord_to.0) {
 			Ordering::Less => {
-				vec![Pos::Right; (coord_to.0 - coord_from.0) as usize]
+				(Some(Pos::Right), (coord_to.0 - coord_from.0) as usize)
 			}
 			Ordering::Equal => {
-				vec![]
+				(None, 0)
 			}
 			Ordering::Greater => {
-				vec![Pos::Left; (coord_from.0 - coord_to.0) as usize]
+				(Some(Pos::Left), (coord_from.0 - coord_to.0) as usize)
 			}
 		};
-		dprint!("; x_cmds: {}\n", x_cmds.iter().map(|s| format!("{s}")).collect::<String>());
-		match coord_from.1.cmp(&coord_to.1) {
+		let (y_cmd, y_cnt) = match coord_from.1.cmp(&coord_to.1) {
 			Ordering::Less => {
-				cmds.extend_from_slice(&vec![Pos::Down; (coord_to.1 - coord_from.1) as usize]);
-				cmds.extend_from_slice(&x_cmds);
+				(Some(Pos::Down), (coord_to.1 - coord_from.1) as usize)
 			}
-			Ordering::Equal => {
-				cmds.extend_from_slice(&x_cmds);
-			},
+			Ordering::Equal => (None, 0),
 			Ordering::Greater => {
-				cmds.extend_from_slice(&x_cmds);
-				cmds.extend_from_slice(&vec![Pos::Up; (coord_from.1 - coord_to.1) as usize]);
+				(Some(Pos::Up), (coord_from.1 - coord_to.1) as usize)
 			}
 		};
+		dprint!("; x_cmd: {x_cmd:?}{x_cnt}; y_cmds: {y_cmd:?}{y_cnt}\n");
+		let add = |vec :&mut Vec<_>, v :Option<Pos>, cnt :usize| {
+			if let Some(v) = v {
+				vec.extend_from_slice(&vec![v; cnt]);
+			}
+		};
+		/*
+		Try to go left first, unless it can't be done:
+		the < button is very far from the other buttons, and one needs to
+		press < to get to it from A. If one does v<A for example, one needs to
+		do v<A<A>>^A, and for <vA one needs to do v<<A>A>^A.
+		------------------------
+		                       v
+		       v       <       A
+		  v <  A   <   A >>  ^ A
+		v<A<A>>Av<<A>>^AvAA<^A>A
+		------------------------
+		------------------------
+		                   v
+		         <   v     A
+		  v <<   A > A > ^ A
+		<vA<AA>>^AvA^AvA<A>A
+		------------------------
+		Same goes for the down button: try to put it first if possible,
+		but still after the left button.
+		*/
+		// Go left first if possible
+		if x_cmd == Some(Pos::Left) && (coord_from.0, coord_to.1) != T::EMPTY_POS {
+			add(&mut cmds, x_cmd, x_cnt);
+			add(&mut cmds, y_cmd, y_cnt);
+		}
+		// If not, try to go down first
+		else if y_cmd == Some(Pos::Down) {
+			add(&mut cmds, y_cmd, y_cnt);
+			add(&mut cmds, x_cmd, x_cnt);
+		}
+		// Outside of these preferences, it doesn't matter, do something safe.
+		else if (coord_from.0, coord_to.1) != T::EMPTY_POS {
+			add(&mut cmds, x_cmd, x_cnt);
+			add(&mut cmds, y_cmd, y_cnt);
+		} else {
+			add(&mut cmds, y_cmd, y_cnt);
+			add(&mut cmds, x_cmd, x_cnt);
+		}
 		cmds.push(Pos::A);
 	}
-	dprint!("robot cmds: {}\n", cmds.iter().map(|s| format!("{s}")).collect::<String>());
+	dprint!("robot cmds: {}\n", dcmds(&cmds));
 	cmds
 }
 
 fn shortest_press_seq(code :&[PosNum]) -> Vec<Pos> {
-	let code_0 = shortest_for_pos_num(code);
-	let code_1 = shortest_remote_one(&code_0);
-	let final_code = shortest_remote_one(&code_1);
+	let code_0 = shortest_for(code);
+	let code_1 = shortest_for(&code_0);
+	let final_code = shortest_for(&code_1);
 	final_code
 }
 
