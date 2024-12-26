@@ -186,13 +186,16 @@ fn add_transition<T :Coord>(cmds :&mut Vec<Pos>, cd_from :T, cd_to :T) {
 	cmds.push(Pos::A);
 }
 
+fn transitions_for<T :Coord>(code :&[T]) -> impl Iterator<Item = (T, T)> + '_ {
+	code.iter().scan(T::A, |prev, &cd_to| {
+		let prev = std::mem::replace(prev, cd_to);
+		Some((prev, cd_to))
+	})
+}
+
 fn shortest_for<T :Coord>(code :&[T]) -> Vec<Pos> {
 	let mut cmds = Vec::new();
-	let mut code = code.to_vec();
-	code.insert(0, T::A);
-	for wnd in code.windows(2) {
-		let cd_from = wnd[0];
-		let cd_to = wnd[1];
+	for (cd_from, cd_to) in transitions_for(code) {
 		add_transition(&mut cmds, cd_from, cd_to);
 	}
 	dprint!("robot cmds: {}\n", dcmds(&cmds));
