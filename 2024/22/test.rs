@@ -34,5 +34,5 @@ fn test_2() {
 	let nums = parse(EXAMPLE_INPUT_2);
 	assert_eq!(bananas_for(&[123], &[-1, -1, 0, 2]), 6);
 	assert_eq!(bananas_for(&nums, &[-2, 1, -1, 3]), 23);
-	assert_eq!(most_bananas_simple(&nums), 23);
+	assert_eq!(most_bananas_map(&nums), 23);
 }
