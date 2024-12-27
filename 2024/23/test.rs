@@ -39,4 +39,5 @@ td-yn
 fn test_1() {
 	let net = parse(EXAMPLE_INPUT_1);
 	assert_eq!(count_with_t(&net), 7);
+	assert_eq!(password(&net), "co,de,ka,ta");
 }

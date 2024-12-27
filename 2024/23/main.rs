@@ -8,6 +8,7 @@ mod test;
 fn main() {
 	let net = parse(INPUT);
 	println!("count with t: {}", count_with_t(&net));
+	println!("password: {}", password(&net));
 }
 
 fn parse(s :&str) -> Network {
@@ -65,4 +66,55 @@ fn count_with_t(net :&Network) -> u32 {
 		}
 	}
 	k3s.len() as u32
+}
+
+fn try_extend_sizes(net :&Network, cliques :&HashSet<Vec<usize>>) -> HashSet<Vec<usize>> {
+	let mut res = HashSet::new();
+	for cl in cliques {
+		for adj in &net.adj[&cl[0]] {
+			let mut stays_clique = true;
+			for in_cl in cl.iter() {
+				if adj == in_cl || !net.adj[in_cl].contains(adj) {
+					stays_clique = false;
+					break;
+				}
+			}
+			if stays_clique {
+				let mut new_cl = cl.clone();
+				new_cl.push(*adj);
+				new_cl.sort();
+				res.insert(new_cl);
+			}
+		}
+	}
+	res
+}
+
+fn password(net :&Network) -> String {
+	let mut k3s = HashSet::new();
+	for (id, adj_id) in net.adj.iter() {
+		for adj in adj_id {
+			for adjj in &net.adj[&adj] {
+				if *adjj == *id { continue }
+				if !adj_id.contains(&adjj) { continue }
+				let mut cl = vec![*id, *adj, *adjj];
+				cl.sort();
+				k3s.insert(cl);
+			}
+		}
+	}
+
+	let mut max_cliques = k3s;
+	let mut new_max_cliques = max_cliques.clone();
+	while !new_max_cliques.is_empty() {
+		max_cliques = new_max_cliques;
+		new_max_cliques = try_extend_sizes(net, &max_cliques);
+	}
+
+	let max_clique = max_cliques.iter().next().unwrap();
+	let mut s = max_clique.iter()
+		.map(|cl| net.id_to_name[cl].to_owned())
+		.collect::<Vec<String>>();
+	s.sort();
+	s.join(",")
 }
