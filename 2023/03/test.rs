@@ -31,6 +31,6 @@ const INPUT_EXTRACT :&str = "\
 
 #[test]
 fn test_extract() {
-	let pn = part_numbers(INPUT_EXTRACT);
-	assert_eq!(&[697], pn.as_slice());
+	let pn_gr = pn_gr(INPUT_EXTRACT);
+	assert_eq!(&[697], pn_gr.0.as_slice());
 }
