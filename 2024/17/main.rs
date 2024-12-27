@@ -176,7 +176,6 @@ impl Computer {
 		let mut cl = self.clone();
 		let mut tmp = Vec::new();
 		let mut v = 0;
-		let mut mul = 1;
 		'outer: for len in 2..=self.program.len() {
 			for next_a in 0..256 {
 				let a = v + next_a;
@@ -186,7 +185,7 @@ impl Computer {
 				cl.ip = self.ip;
 				tmp.clear();
 				cl.output_mut_inner(&mut tmp);
-				dprint!("    len: {len}, a: {a}, mul: {mul}, tmp: {tmp:?}\n");
+				dprint!("    len: {len}, a: {a}, tmp: {tmp:?}\n");
 				if len <= tmp.len() && self.program.ends_with(&tmp) {
 					dprint!("        -> continue\n");
 					if tmp.len() == self.program.len() {
