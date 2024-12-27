@@ -167,42 +167,6 @@ impl std::ops::Add<Self> for Frac {
 	}
 }
 
-#[cfg(test)]
-fn minimal_token_count_max_100_(m :&Machine) -> Option<(u64, u64)> {
-	dprint!("  -> inner\n");
-	for a_cnt in 0..100 {
-		let a = (m.button_a.0 * a_cnt, m.button_a.1 * a_cnt);
-		if a.0 > m.prize.0 || a.1 > m.prize.1 {
-			return None;
-		}
-		if a == m.prize {
-			dprint!("    -> a_cnt only: {a_cnt}\n");
-			return Some((a_cnt, 0));
-		}
-		let need = (m.prize.0 - a.0, m.prize.1 - a.1);
-		if (need.0 % m.button_b.0 != 0) || (need.1 % m.button_b.1 != 0) {
-			continue;
-		}
-		let b_cnt = need.0 / m.button_b.0;
-		if b_cnt * m.button_b.1 != need.1 {
-			continue;
-		}
-		dprint!("    -> a_cnt: {a_cnt}, b_cnt: {b_cnt}\n");
-		return Some((a_cnt, b_cnt));
-	}
-	None
-}
-
-#[cfg(test)]
-fn minimal_token_count_max_100_slow(m :&Machine) -> Option<u64> {
-	dprint!("Machine {m:?}\n");
-	let no_swap = minimal_token_count_max_100_(m).map(|(a, b)| a * 3 + b);
-	let mut m_swapped = m.clone();
-	std::mem::swap(&mut m_swapped.button_a, &mut m_swapped.button_b);
-	let swapped = minimal_token_count_max_100_(&m_swapped).map(|(a, b)| a + b * 3);
-	swapped.min(no_swap)
-}
-
 fn minimal_token_count_max_100(m :&Machine) -> Option<u64> {
 	dprint!("Machine {m:?}\n");
 	m.tok_needed()
