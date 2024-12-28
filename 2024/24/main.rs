@@ -87,7 +87,7 @@ impl BinOp {
 
 macro_rules! dprint {
 	($($args:expr),*) => {
-		//if false
+		if false
 			{ print!($($args),*); }
 	};
 }
@@ -113,7 +113,7 @@ impl Gates {
 		values.insert(wire, v);
 		v
 	}
-	fn eval(&self) -> u32 {
+	fn eval(&self) -> u64 {
 		let mut values = self.inputs.clone();
 		let mut names_sorted = self.id_to_name.iter()
 			.map(|(id, name)| (*id, name.clone()))
@@ -126,7 +126,7 @@ impl Gates {
 			if !name.starts_with("z") {
 				continue;
 			}
-			let val = self.eval_one(id, &mut values) as u32;
+			let val = self.eval_one(id, &mut values) as u64;
 			dprint!("wire {name} is {val}\n");
 			res |= val << sh;
 			sh += 1;
