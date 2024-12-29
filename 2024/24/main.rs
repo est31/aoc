@@ -201,14 +201,15 @@ impl Gates {
 			}
 			for b_id in gate_ids[(a_off + 1)..].iter() {
 				let b_name = &cl.id_to_name[&b_id];
-				dprint!("  trying {} <-> {}\n", a_name, b_name);
 				if a_id == b_id { continue }
+				dprint!("  trying {} <-> {}", a_name, b_name);
 
 				let tmp = cl.gates[&a_id];
 				cl.gates.insert(*a_id, cl.gates[&b_id]);
 				cl.gates.insert(*b_id, tmp);
 
 				if let Some(errs_swapped) = cl.find_errors(errs_min) {
+					dprint!(" -> {errs_swapped}\n");
 					if errs_swapped < errs_min {
 						dprint!("New swap pair {}<->{}: {errs_min} > {errs_swapped}\n", a_name, b_name);
 						swapped.push(cl.id_to_name[&a_id].to_owned());
@@ -216,6 +217,8 @@ impl Gates {
 						errs_min = errs_swapped;
 						break;
 					}
+				} else {
+					dprint!(" -> None\n");
 				}
 
 				let tmp = cl.gates[&a_id];
