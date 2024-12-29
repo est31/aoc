@@ -103,27 +103,33 @@ struct Gates {
 }
 
 impl Gates {
-	fn eval_one(&self, wire :usize, values :&mut HashMap<usize, bool>, on_stack :&mut HashSet<usize>) -> Option<bool> {
+	fn eval_one(&self, wire :usize, values :&mut HashMap<usize, bool>, check_on_stack :&mut impl FnMut(usize) -> bool) -> Option<bool> {
 		if let Some(v) = values.get(&wire) {
 			return Some(*v);
 		}
-		if !on_stack.insert(wire) {
+		if check_on_stack(wire) {
 			// cycle
 			return None;
 		}
 		let (id_l, binop, id_r) = self.gates[&wire];
-		let l = self.eval_one(id_l, values, on_stack)?;
-		let r = self.eval_one(id_r, values, on_stack)?;
+		let l = self.eval_one(id_l, values, check_on_stack)?;
+		let r = self.eval_one(id_r, values, check_on_stack)?;
 		let v = binop.eval(l, r);
 		values.insert(wire, v);
 		Some(v)
 	}
 	fn eval(&self) -> u64 {
-		self.eval_with_inputs(self.inputs.clone()).unwrap()
+		self.eval_with_inputs_nc(self.inputs.clone())
 	}
-	fn eval_with_inputs(&self, inputs :HashMap<usize, bool>) -> Option<u64> {
-		let mut values = inputs;
+	fn eval_with_inputs_opt(&self, inputs :HashMap<usize, bool>) -> Option<u64> {
 		let mut on_stack = HashSet::new();
+		self.eval_with_inputs_inner(inputs, &mut |w| !on_stack.insert(w))
+	}
+	fn eval_with_inputs_nc(&self, inputs :HashMap<usize, bool>) -> u64 {
+		self.eval_with_inputs_inner(inputs, &mut |_| false).unwrap()
+	}
+	fn eval_with_inputs_inner(&self, inputs :HashMap<usize, bool>, check_on_stack :&mut impl FnMut(usize) -> bool) -> Option<u64> {
+		let mut values = inputs;
 		let mut names_sorted = self.id_to_name.iter()
 			.map(|(id, name)| (*id, name.clone()))
 			.collect::<Vec<_>>();
@@ -135,7 +141,7 @@ impl Gates {
 			if !name.starts_with("z") {
 				continue;
 			}
-			let val = self.eval_one(id, &mut values, &mut on_stack)? as u64;
+			let val = self.eval_one(id, &mut values, check_on_stack)? as u64;
 			//dprint!("wire {name} is {val}\n");
 			res |= val << sh;
 			sh += 1;
@@ -153,13 +159,15 @@ impl Gates {
 		});
 		let inputs = x_it.chain(y_it)
 			.collect::<HashMap<_, _>>();
-		let res = self.eval_with_inputs(inputs)?;
+		let res = self.eval_with_inputs_nc(inputs);
 		//dprint!("res is 0b{res:b}\n");
 		Some(res)
 	}
 	fn find_errors(&self, errs_min :u32) -> Option<u32> {
 		let mask = (1u64 << 45) - 1;
 		let cnt = 4;
+
+		self.eval_with_inputs_opt(self.inputs.clone())?;
 
 		let mut err_count = 0;
 		for sh in 0..45 {
