@@ -180,12 +180,9 @@ impl Gates {
 			if o != expected {
 				err_count += 1;
 				if err_count > errs_min.0 {
-					dprint!(" sh: {sh} fast reject");
+					//dprint!(" sh: {sh} fast reject");
 					return None;
 				}
-				//dprint!("found error: b{x:045b} + b{y:045b} = b{expected:045b}, got b{o:045b}\n");
-			} else {
-				//dprint!("expected b{o:045b}\n");
 			}
 		}
 		let fast_err_cnt = err_count;
@@ -201,12 +198,9 @@ impl Gates {
 					if o != expected {
 						err_count += 1;
 						if err_count > errs_min.1 {
-							dprint!(" sh: {sh}, x: {x}, y: {y}");
+							//dprint!(" sh: {sh}, x: {x}, y: {y}");
 							return None;
 						}
-						//dprint!("found error: b{x:045b} + b{y:045b} = b{expected:045b}, got b{o:045b}\n");
-					} else {
-						//dprint!("expected b{o:045b}\n");
 					}
 				}
 			}
@@ -218,28 +212,29 @@ impl Gates {
 		let mut errs_min = self.find_errors((u32::MAX, u32::MAX)).unwrap();
 		let mut cl = self.clone();
 
-		let mut gate_ids = self.gates.iter()
-			.map(|(id, _)| *id)
+		let mut names_sorted = self.id_to_name.iter()
+			.filter(|(id, _name)| self.gates.contains_key(id))
+			.map(|(id, name)| (*id, name.clone()))
 			.collect::<Vec<_>>();
-		gate_ids.sort();
+		names_sorted.sort_by_key(|tup| tup.1.clone());
+		names_sorted.reverse();
 
 		// Simple greedy algorithm
-		for (a_off, a_id) in gate_ids.iter().enumerate() {
-			let a_name = &cl.id_to_name[&a_id];
-			if a_off + 1 == gate_ids.len() {
+		for (a_off, &(a_id, ref a_name)) in names_sorted.iter().enumerate() {
+			if a_off + 1 == names_sorted.len() {
 				break;
 			}
-			for b_id in gate_ids[(a_off + 1)..].iter() {
-				let b_name = &cl.id_to_name[&b_id];
+			dprint!("  swaps for {a_id}:{} is {:?}\n", a_name, cl.gates[&a_id]);
+			for &(b_id, ref b_name) in names_sorted[(a_off + 1)..].iter() {
 				if a_id == b_id { continue }
-				dprint!("  trying {a_id}:{} <-> {b_id}:{}", a_name, b_name);
+				//dprint!("  trying {a_id}:{} <-> {b_id}:{}", a_name, b_name);
 
 				let tmp = cl.gates[&a_id];
-				cl.gates.insert(*a_id, cl.gates[&b_id]);
-				cl.gates.insert(*b_id, tmp);
+				cl.gates.insert(a_id, cl.gates[&b_id]);
+				cl.gates.insert(b_id, tmp);
 
 				if let Some(errs_swapped) = cl.find_errors(errs_min) {
-					dprint!(" -> {errs_swapped:?}\n");
+					//dprint!(" -> {errs_swapped:?}\n");
 					if errs_swapped.1 < errs_min.1 {
 						dprint!("New swap pair {}<->{}: {errs_min:?} > {errs_swapped:?}\n", a_name, b_name);
 						swapped.push(cl.id_to_name[&a_id].to_owned());
@@ -248,15 +243,15 @@ impl Gates {
 						break;
 					}
 				} else {
-					dprint!(" -> None\n");
+					//dprint!(" -> None\n");
 				}
 
 				let tmp = cl.gates[&a_id];
-				cl.gates.insert(*a_id, cl.gates[&b_id]);
-				cl.gates.insert(*b_id, tmp);
+				cl.gates.insert(a_id, cl.gates[&b_id]);
+				cl.gates.insert(b_id, tmp);
 			}
 		}
-		dprint!("errs_min: {errs_min:?}, swapped: [{swapped:?}]");
+		dprint!("errs_min: {errs_min:?}, swapped: [{swapped:?}]\n");
 		assert_eq!(cl.find_errors((0, 0)), Some((0, 0)));
 		swapped.sort();
 		swapped.join(",")
