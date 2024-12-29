@@ -159,16 +159,17 @@ impl Gates {
 	}
 	fn find_errors(&self, errs_min :u32) -> Option<u32> {
 		let mask = (1u64 << 45) - 1;
-		let cnt = 1 << 3;
+		let cnt = 4;
 
 		let mut err_count = 0;
 		for sh in 0..45 {
 			for x in 0..cnt {
 				for y in 0..cnt {
-					let x = (x << sh) & mask;
-					let y = (y << sh) & mask;
-					let expected = x + y;
-					let o = self.output_for(x, y)?;
+					if (x, y) == (0, 0) && sh > 0 { continue }
+					let x_sh = (x << sh) & mask;
+					let y_sh = (y << sh) & mask;
+					let expected = x_sh + y_sh;
+					let o = self.output_for(x_sh, y_sh)?;
 					if o != expected {
 						err_count += 1;
 						if err_count > errs_min {
