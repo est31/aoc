@@ -187,10 +187,19 @@ impl Gates {
 		let mut swapped = Vec::new();
 		let mut errs_min = self.find_errors(u32::MAX).unwrap();
 		let mut cl = self.clone();
+
+		let mut gate_ids = self.gates.iter()
+			.map(|(id, _)| *id)
+			.collect::<Vec<_>>();
+		gate_ids.sort();
+
 		// Simple greedy algorithm
-		for (a_id, _) in self.gates.iter() {
+		for (a_off, a_id) in gate_ids.iter().enumerate() {
 			let a_name = &cl.id_to_name[&a_id];
-			for (b_id, _) in self.gates.iter() {
+			if a_off + 1 == gate_ids.len() {
+				break;
+			}
+			for b_id in gate_ids[(a_off + 1)..].iter() {
 				let b_name = &cl.id_to_name[&b_id];
 				dprint!("  trying {} <-> {}\n", a_name, b_name);
 				if a_id == b_id { continue }
