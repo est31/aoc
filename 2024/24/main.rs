@@ -157,7 +157,7 @@ impl Gates {
 		//dprint!("res is 0b{res:b}\n");
 		Some(res)
 	}
-	fn find_errors(&self) -> Option<u32> {
+	fn find_errors(&self, errs_min :u32) -> Option<u32> {
 		let mask = (1u64 << 45) - 1;
 		let cnt = 1 << 3;
 
@@ -171,6 +171,9 @@ impl Gates {
 					let o = self.output_for(x, y)?;
 					if o != expected {
 						err_count += 1;
+						if err_count > errs_min {
+							return None;
+						}
 						//dprint!("found error: b{x:045b} + b{y:045b} = b{expected:045b}, got b{o:045b}\n");
 					} else {
 						//dprint!("expected b{o:045b}\n");
@@ -182,7 +185,7 @@ impl Gates {
 	}
 	fn swaps_for_correct(&self) -> String {
 		let mut swapped = Vec::new();
-		let mut errs_min = self.find_errors().unwrap();
+		let mut errs_min = self.find_errors(u32::MAX).unwrap();
 		let mut cl = self.clone();
 		// Simple greedy algorithm
 		for (a_id, _) in self.gates.iter() {
@@ -196,7 +199,7 @@ impl Gates {
 				cl.gates.insert(*a_id, cl.gates[&b_id]);
 				cl.gates.insert(*b_id, tmp);
 
-				if let Some(errs_swapped) = cl.find_errors() {
+				if let Some(errs_swapped) = cl.find_errors(errs_min) {
 					if errs_swapped < errs_min {
 						dprint!("New swap pair {}<->{}: {errs_min} > {errs_swapped}\n", a_name, b_name);
 						swapped.push(cl.id_to_name[&a_id].to_owned());
@@ -211,7 +214,7 @@ impl Gates {
 				cl.gates.insert(*b_id, tmp);
 			}
 		}
-		assert_eq!(cl.find_errors(), Some(0));
+		assert_eq!(cl.find_errors(0), Some(0));
 		swapped.sort();
 		swapped.join(",")
 	}
