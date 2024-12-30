@@ -239,20 +239,13 @@ impl Gates {
 			dprint!("  swaps for {a_id}:{} is {:?}\n", a_name, cl.gates[&a_id]);
 			for &(b_id, ref b_name) in names_sorted[(a_off + 1)..].iter() {
 				if a_id == b_id { continue }
-				//dprint!("  trying {a_id}:{} <-> {b_id}:{}", a_name, b_name);
-
 				cl.swap(a_id, b_id);
 
 				if let Some(errs_swapped) = cl.find_errors(errs_min) {
-					//dprint!(" -> {errs_swapped:?}\n");
 					if errs_swapped.1 < errs_min.1 && errs_swapped.0 <= errs_min.0 {
 						dprint!("New swap pair {}<->{}: {errs_min:?} > {errs_swapped:?}\n", a_name, b_name);
 						swaps_elig.push((errs_swapped, a_id, b_id));
-						//errs_min = errs_swapped;
-						//break;
 					}
-				} else {
-					//dprint!(" -> None\n");
 				}
 
 				cl.swap(a_id, b_id);
