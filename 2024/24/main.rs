@@ -119,11 +119,15 @@ impl Gates {
 		Some(v)
 	}
 	fn eval(&self) -> u64 {
+		let inputs = self.mk_inputs();
+		self.eval_with_inputs_nc(inputs)
+	}
+	fn mk_inputs(&self) -> Vec<Option<bool>> {
 		let mut inputs = vec![None; self.id_to_name.len()];
 		for (inp, b) in self.inputs.iter() {
 			inputs[*inp] = Some(*b);
 		}
-		self.eval_with_inputs_nc(inputs)
+		inputs
 	}
 	fn eval_with_inputs_opt(&self, inputs :Vec<Option<bool>>) -> Option<u64> {
 		let mut on_stack = HashSet::new();
@@ -168,10 +172,7 @@ impl Gates {
 		let mask = (1u64 << 45) - 1;
 		let cnt = 4;
 
-		let mut inputs = vec![None; self.id_to_name.len()];
-		for (inp, b) in self.inputs.iter() {
-			inputs[*inp] = Some(*b);
-		}
+		let inputs = self.mk_inputs();
 		self.eval_with_inputs_opt(inputs)?;
 
 		let mut err_count = 0;
