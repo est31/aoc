@@ -172,14 +172,14 @@ impl Gates {
 		//dprint!("res is 0b{res:b}\n");
 		Some(res)
 	}
-	fn find_errors(&self, errs_min :(u32, u32)) -> Option<(u32, u32)> {
+	fn find_errors(&self, errs_min :(u64, u32)) -> Option<(u64, u32)> {
 		let mask = (1u64 << 45) - 1;
 		let cnt = 4;
 
 		let inputs = self.mk_inputs();
 		self.eval_with_inputs_opt(inputs)?;
 
-		let mut err_count = 0;
+		let mut error_mask = 0;
 		for sh in 0..45 {
 			let x = 1;
 			let y = 1;
@@ -188,15 +188,17 @@ impl Gates {
 			let expected = x_sh + y_sh;
 			let o = self.output_for(x_sh, y_sh)?;
 			if o != expected {
-				err_count += 1;
+				error_mask |= x_sh;
 				// Don't even tolerate it if the err count is only *reached*
-				if err_count >= errs_min.0 {
+				if error_mask & (!errs_min.0) != 0 || error_mask == errs_min.0 {
 					//dprint!(" sh: {sh} fast reject");
 					return None;
 				}
 			}
 		}
-		let fast_err_cnt = err_count;
+		let fast_err_cnt = error_mask;
+
+		let mut err_count = 0;
 
 		for sh in 0..45 {
 			for x in 0..cnt {
@@ -224,7 +226,7 @@ impl Gates {
 	}
 	fn swaps_for_correct(&self) -> String {
 		let mut swapped = Vec::new();
-		let mut errs_min = self.find_errors((u32::MAX, u32::MAX)).unwrap();
+		let mut errs_min = self.find_errors((u64::MAX, u32::MAX)).unwrap();
 		let mut cl = self.clone();
 
 		let mut names_sorted = self.id_to_name.iter()
