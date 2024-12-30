@@ -63,7 +63,7 @@ struct LockKeys {
 
 macro_rules! dprint {
 	($($args:expr),*) => {
-		//if false
+		if false
 			{ print!($($args),*); }
 	};
 }
