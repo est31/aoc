@@ -103,9 +103,9 @@ struct Gates {
 }
 
 impl Gates {
-	fn eval_one(&self, wire :usize, values :&mut HashMap<usize, bool>, check_on_stack :&mut impl FnMut(usize) -> bool) -> Option<bool> {
-		if let Some(v) = values.get(&wire) {
-			return Some(*v);
+	fn eval_one(&self, wire :usize, values :&mut Vec<Option<bool>>, check_on_stack :&mut impl FnMut(usize) -> bool) -> Option<bool> {
+		if let Some(v) = values[wire] {
+			return Some(v);
 		}
 		if check_on_stack(wire) {
 			// cycle
@@ -115,20 +115,24 @@ impl Gates {
 		let l = self.eval_one(id_l, values, check_on_stack)?;
 		let r = self.eval_one(id_r, values, check_on_stack)?;
 		let v = binop.eval(l, r);
-		values.insert(wire, v);
+		values[wire] = Some(v);
 		Some(v)
 	}
 	fn eval(&self) -> u64 {
-		self.eval_with_inputs_nc(self.inputs.clone())
+		let mut inputs = vec![None; self.id_to_name.len()];
+		for (inp, b) in self.inputs.iter() {
+			inputs[*inp] = Some(*b);
+		}
+		self.eval_with_inputs_nc(inputs)
 	}
-	fn eval_with_inputs_opt(&self, inputs :HashMap<usize, bool>) -> Option<u64> {
+	fn eval_with_inputs_opt(&self, inputs :Vec<Option<bool>>) -> Option<u64> {
 		let mut on_stack = HashSet::new();
 		self.eval_with_inputs_inner(inputs, &mut |w| !on_stack.insert(w))
 	}
-	fn eval_with_inputs_nc(&self, inputs :HashMap<usize, bool>) -> u64 {
+	fn eval_with_inputs_nc(&self, inputs :Vec<Option<bool>>) -> u64 {
 		self.eval_with_inputs_inner(inputs, &mut |_| false).unwrap()
 	}
-	fn eval_with_inputs_inner(&self, inputs :HashMap<usize, bool>, check_on_stack :&mut impl FnMut(usize) -> bool) -> Option<u64> {
+	fn eval_with_inputs_inner(&self, inputs :Vec<Option<bool>>, check_on_stack :&mut impl FnMut(usize) -> bool) -> Option<u64> {
 		let mut values = inputs;
 		let mut names_sorted = self.id_to_name.iter()
 			.map(|(id, name)| (*id, name.clone()))
@@ -151,14 +155,11 @@ impl Gates {
 	}
 	fn output_for(&self, x :u64, y :u64) -> Option<u64> {
 		let bit_count = 45;
-		let x_it = (0..bit_count).map(|sh| {
-			(sh, x & (1 << sh) != 0)
-		});
-		let y_it = (0..bit_count).map(|sh| {
-			(sh + bit_count, y & (1 << sh) != 0)
-		});
-		let inputs = x_it.chain(y_it)
-			.collect::<HashMap<_, _>>();
+		let mut inputs = vec![None; self.id_to_name.len()];
+		for sh in 0..bit_count {
+			inputs[sh] = Some(x & (1 << sh) != 0);
+			inputs[sh + bit_count] = Some(y & (1 << sh) != 0);
+		}
 		let res = self.eval_with_inputs_nc(inputs);
 		//dprint!("res is 0b{res:b}\n");
 		Some(res)
@@ -167,7 +168,11 @@ impl Gates {
 		let mask = (1u64 << 45) - 1;
 		let cnt = 4;
 
-		self.eval_with_inputs_opt(self.inputs.clone())?;
+		let mut inputs = vec![None; self.id_to_name.len()];
+		for (inp, b) in self.inputs.iter() {
+			inputs[*inp] = Some(*b);
+		}
+		self.eval_with_inputs_opt(inputs)?;
 
 		let mut err_count = 0;
 		for sh in 0..45 {
