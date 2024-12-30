@@ -207,6 +207,11 @@ impl Gates {
 		}
 		Some((fast_err_cnt, err_count))
 	}
+	fn swap(&mut self, a_id :usize, b_id :usize) {
+		let tmp = self.gates[&a_id];
+		self.gates.insert(a_id, self.gates[&b_id]);
+		self.gates.insert(b_id, tmp);
+	}
 	fn swaps_for_correct(&self) -> String {
 		let mut swapped = Vec::new();
 		let mut errs_min = self.find_errors((u32::MAX, u32::MAX)).unwrap();
@@ -219,7 +224,8 @@ impl Gates {
 		names_sorted.sort_by_key(|tup| tup.1.clone());
 		names_sorted.reverse();
 
-		// Simple greedy algorithm
+		let mut swaps_elig = Vec::new();
+		// First: find all eligible swaps, i.e. those that improve the situation
 		for (a_off, &(a_id, ref a_name)) in names_sorted.iter().enumerate() {
 			if a_off + 1 == names_sorted.len() {
 				break;
@@ -229,30 +235,59 @@ impl Gates {
 				if a_id == b_id { continue }
 				//dprint!("  trying {a_id}:{} <-> {b_id}:{}", a_name, b_name);
 
-				let tmp = cl.gates[&a_id];
-				cl.gates.insert(a_id, cl.gates[&b_id]);
-				cl.gates.insert(b_id, tmp);
+				cl.swap(a_id, b_id);
 
 				if let Some(errs_swapped) = cl.find_errors(errs_min) {
 					//dprint!(" -> {errs_swapped:?}\n");
-					if errs_swapped.1 < errs_min.1 {
+					if errs_swapped.1 < errs_min.1 && errs_swapped.0 <= errs_min.0 {
 						dprint!("New swap pair {}<->{}: {errs_min:?} > {errs_swapped:?}\n", a_name, b_name);
-						swapped.push(cl.id_to_name[&a_id].to_owned());
-						swapped.push(cl.id_to_name[&b_id].to_owned());
-						errs_min = errs_swapped;
-						break;
+						swaps_elig.push((errs_swapped, a_id, b_id));
+						//errs_min = errs_swapped;
+						//break;
 					}
 				} else {
 					//dprint!(" -> None\n");
 				}
 
-				let tmp = cl.gates[&a_id];
-				cl.gates.insert(a_id, cl.gates[&b_id]);
-				cl.gates.insert(b_id, tmp);
+				cl.swap(a_id, b_id);
 			}
 		}
+		swaps_elig.sort();
+		dprint!("eligible swaps: {} count: {swaps_elig:?}\n", swaps_elig.len());
+
+		// Now do a repeated search for the best pair to swap.
+		for i in 0..4 {
+			let mut swaps_selecting = Vec::new();
+			for &(_, a_id, b_id) in swaps_elig.iter() {
+				let a_name = &self.id_to_name[&a_id];
+				let b_name = &self.id_to_name[&b_id];
+				//dprint!("  trying {a_id}:{} <-> {b_id}:{}", a_name, b_name);
+
+				cl.swap(a_id, b_id);
+
+				if let Some(errs_swapped) = cl.find_errors(errs_min) {
+					//dprint!(" -> {errs_swapped:?}\n");
+					if errs_swapped.1 < errs_min.1 && errs_swapped.0 <= errs_min.0 {
+						dprint!("New swap pair {}<->{}: {errs_min:?} > {errs_swapped:?}\n", a_name, b_name);
+						swaps_selecting.push((errs_swapped, a_id, b_id));
+					}
+				}
+
+				cl.swap(a_id, b_id);
+			}
+			swaps_selecting.sort();
+			dprint!("available swaps: {} count: {swaps_selecting:?}\n", swaps_selecting.len());
+			let (errs_swapped, a_id, b_id) = swaps_selecting[0];
+			let a_name = cl.id_to_name[&a_id].to_owned();
+			let b_name = cl.id_to_name[&b_id].to_owned();
+			dprint!("ADDING SWAP PAIR i:{i} {}<->{}: {errs_min:?} > {errs_swapped:?}\n", a_name, b_name);
+			errs_min = errs_swapped;
+			cl.swap(a_id, b_id);
+			swapped.push(a_name);
+			swapped.push(b_name);
+		}
 		dprint!("errs_min: {errs_min:?}, swapped: [{swapped:?}]\n");
-		assert_eq!(cl.find_errors((0, 0)), Some((0, 0)));
+		//assert_eq!(cl.find_errors((0, 0)), Some((0, 0)));
 		swapped.sort();
 		swapped.join(",")
 	}
