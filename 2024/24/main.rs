@@ -181,14 +181,12 @@ impl Gates {
 
 		let mut error_mask = 0;
 		for sh in 0..45 {
-			let x = 1;
-			let y = 1;
-			let x_sh = (x << sh) & mask;
-			let y_sh = (y << sh) & mask;
-			let expected = x_sh + y_sh;
-			let o = self.output_for(x_sh, y_sh)?;
+			let v = 1;
+			let v_sh = (v << sh) & mask;
+			let expected = v_sh * 2;
+			let o = self.output_for(v_sh, v_sh)?;
 			if o != expected {
-				error_mask |= x_sh;
+				error_mask |= v_sh;
 				// Don't even tolerate it if the err count is only *reached*
 				if error_mask & (!errs_min.0) != 0 || error_mask == errs_min.0 {
 					//dprint!(" sh: {sh} fast reject");
