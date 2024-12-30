@@ -39,7 +39,7 @@ fn parse(s :&str) -> Gates {
 		inputs.insert(id, val);
 	}
 
-	let mut gates = HashMap::<usize, _>::new();
+	let mut gates_hm = HashMap::<usize, _>::new();
 	while let Some(l) = lines.next() {
 		let mut in_out = l.split(" -> ");
 		let in_ = in_out.next().unwrap();
@@ -57,7 +57,11 @@ fn parse(s :&str) -> Gates {
 		};
 		let r = cmps.next().unwrap();
 		let r_id = intern(&mut name_to_id, &mut id_to_name, r);
-		gates.insert(out_id, (l_id, binop, r_id));
+		gates_hm.insert(out_id, (l_id, binop, r_id));
+	}
+	let mut gates = vec![None; id_to_name.len()];
+	for (id, g) in gates_hm {
+		gates[id] = Some(g);
 	}
 
 	Gates {
@@ -99,7 +103,7 @@ struct Gates {
 	name_to_id :HashMap<String, usize>,
 	id_to_name :HashMap<usize, String>,
 	inputs :HashMap<usize, bool>,
-	gates :HashMap<usize, (usize, BinOp, usize)>,
+	gates :Vec<Option<(usize, BinOp, usize)>>,
 }
 
 impl Gates {
@@ -111,7 +115,7 @@ impl Gates {
 			// cycle
 			return None;
 		}
-		let (id_l, binop, id_r) = self.gates[&wire];
+		let (id_l, binop, id_r) = self.gates[wire].unwrap();
 		let l = self.eval_one(id_l, values, check_on_stack)?;
 		let r = self.eval_one(id_r, values, check_on_stack)?;
 		let v = binop.eval(l, r);
@@ -214,9 +218,7 @@ impl Gates {
 		Some((fast_err_cnt, err_count))
 	}
 	fn swap(&mut self, a_id :usize, b_id :usize) {
-		let tmp = self.gates[&a_id];
-		self.gates.insert(a_id, self.gates[&b_id]);
-		self.gates.insert(b_id, tmp);
+		self.gates.swap(a_id, b_id);
 	}
 	fn swaps_for_correct(&self) -> String {
 		let mut swapped = Vec::new();
@@ -224,7 +226,7 @@ impl Gates {
 		let mut cl = self.clone();
 
 		let mut names_sorted = self.id_to_name.iter()
-			.filter(|(id, _name)| self.gates.contains_key(id))
+			.filter(|(id, _name)| self.gates[**id].is_some())
 			.map(|(id, name)| (*id, name.clone()))
 			.collect::<Vec<_>>();
 		names_sorted.sort_by_key(|tup| tup.1.clone());
@@ -236,7 +238,7 @@ impl Gates {
 			if a_off + 1 == names_sorted.len() {
 				break;
 			}
-			dprint!("  swaps for {a_id}:{} is {:?}\n", a_name, cl.gates[&a_id]);
+			dprint!("  swaps for {a_id}:{} is {:?}\n", a_name, cl.gates[a_id].unwrap());
 			for &(b_id, ref b_name) in names_sorted[(a_off + 1)..].iter() {
 				if a_id == b_id { continue }
 				cl.swap(a_id, b_id);
