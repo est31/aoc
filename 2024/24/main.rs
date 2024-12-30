@@ -200,6 +200,7 @@ impl Gates {
 		for sh in 0..45 {
 			for x in 0..cnt {
 				for y in 0..cnt {
+					if (x, y) == (1, 1) { continue }
 					if (x, y) == (0, 0) && sh > 0 { continue }
 					let x_sh = (x << sh) & mask;
 					let y_sh = (y << sh) & mask;
