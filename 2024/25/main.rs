@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::HashMap;
 
 const INPUT :&str = include_str!("input");
 
@@ -41,6 +41,12 @@ fn parse(s :&str) -> LockKeys {
 				}
 			}
 		}
+		match mode {
+			None => (),
+			Some('.') => keys.push(st),
+			Some('#') => locks.push(st),
+			Some(m) => panic!("invalid char '{m}'"),
+		}
 		break;
 	}
 
@@ -55,14 +61,41 @@ struct LockKeys {
 	locks :Vec<[u8; 5]>,
 }
 
+macro_rules! dprint {
+	($($args:expr),*) => {
+		//if false
+			{ print!($($args),*); }
+	};
+}
+
+fn check(lock :&[u8; 5], key :&[u8; 5]) -> bool {
+	let res = lock.iter()
+		.zip(key.iter())
+		.all(|(l, k)| *l + (5 - *k) <= 5);
+	dprint!("    checking lock={lock:?} and key={key:?} -> {res}\n");
+	res
+}
+
 impl LockKeys {
 	fn unique_fitting_pairs(&self) -> u32 {
-		let locks_hs = self.locks.iter()
-			.copied()
-			.collect::<HashSet<[_; 5]>>();
-		assert_eq!(locks_hs.len(), self.locks.len());
-		self.keys.iter()
-			.filter(|k| locks_hs.contains(*k))
-			.count() as u32
+		dprint!("keys: {:?}\n", self.keys);
+		dprint!("locks: {:?}\n", self.locks);
+		let mut locks_hm = HashMap::<_, Vec<_>>::new();
+		for lock in self.locks.iter() {
+			let key = lock[0];
+			locks_hm.entry(key).or_default().push(*lock);
+		}
+		dprint!("locks hm: {:?}\n", locks_hm);
+		let mut count = 0;
+		for k in self.keys.iter() {
+			dprint!("  key: {k:?}\n");
+			for v in 0..=k[0] {
+				let Some(locks) = locks_hm.get(&v) else { continue };
+				count += locks.iter()
+					.filter(|lock| check(lock, k))
+					.count();
+			}
+		}
+		count as u32
 	}
 }
