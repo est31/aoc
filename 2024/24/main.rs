@@ -189,7 +189,8 @@ impl Gates {
 			let o = self.output_for(x_sh, y_sh)?;
 			if o != expected {
 				err_count += 1;
-				if err_count > errs_min.0 {
+				// Don't even tolerate it if the err count is only *reached*
+				if err_count >= errs_min.0 {
 					//dprint!(" sh: {sh} fast reject");
 					return None;
 				}
