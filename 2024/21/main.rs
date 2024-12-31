@@ -118,7 +118,7 @@ fn parse(s :&str) -> Vec<Vec<PosNum>> {
 
 macro_rules! dprint {
 	($($args:expr),*) => {
-		//if false
+		if false
 			{ print!($($args),*); }
 	};
 }
@@ -163,31 +163,55 @@ fn add_transition<T :Coord>(cmds :&mut Vec<Pos>, cd_from :T, cd_to :T) {
 	press < to get to it from A. If one does v<A for example, one needs to
 	do v<A<A>>^A, and for <vA one needs to do v<<A>A>^A.
 	------------------------
-							v
-			v       <       A
-		v <  A   <   A >>  ^ A
+	.                      v
+	.      v       <       A
+	. v <  A   <   A >>  ^ A
 	v<A<A>>Av<<A>>^AvAA<^A>A
 	------------------------
 	------------------------
-						v
-				<   v     A
-		v <<   A > A > ^ A
+	.                  v
+	.        <   v     A
+	. v <<   A > A > ^ A
 	<vA<AA>>^AvA^AvA<A>A
 	------------------------
-	Same goes for the down button: try to put it first if possible,
-	but still after the left button.
+	For the right button, we want to put it last: if it's together
+	with up, like in ^>A or >^A, 2 keypads down the number for ^>A
+	is still the same as >^A, but if you go 3 pads down,
+	the sequence ^>A is shorter by 1.
+	--------------------
+	.     >        ^   A
+	.  v  A   <  ^ A > A
+	.<vA>^Av<<A>^A>AvA^A
+	--------------------
+	--------------------
+	.       ^      >   A
+	.   <   A  v > A ^ A
+	.v<<A>>^A<vA>A^A<A>A
+	--------------------
+	-------------------------------------------------
+	.                >                    ^         A
+	.        v       A         <      ^   A     >   A
+	.   < v  A  >  ^ A  v <<   A >  ^ A > A  v  A ^ A
+	.v<<A>A<^Av>A<^A>A<vA<AA>>^AvA<^A>AvA^A<vA>^A<A>A
+	-------------------------------------------------
+	-------------------------------------------------
+	.                 ^                >           A
+	.         <       A        v   >   A       ^   A
+	.  v <<   A >>  ^ A   < v  A > A ^ A   <   A > A
+	.v<A<AA^>>AvAA<^A>Av<<A>A^>AvA^A<A>Av<<A>>^AvA^A
+	-------------------------------------------------
 	*/
 	// Go left first if possible
 	if x_cmd == Some(Pos::Left) && (coord_to.0, coord_from.1) != T::EMPTY_POS {
 		add(cmds, x_cmd, x_cnt);
 		add(cmds, y_cmd, y_cnt);
 	}
-	// If not, try to go down first
-	else if y_cmd == Some(Pos::Down) && (coord_from.0, coord_to.1) != T::EMPTY_POS {
+	// Go right last if possible
+	else if x_cmd == Some(Pos::Right) &&  (coord_from.0, coord_to.1) != T::EMPTY_POS {
 		add(cmds, y_cmd, y_cnt);
 		add(cmds, x_cmd, x_cnt);
 	}
-	// Outside of these preferences, it doesn't matter, do something safe.
+	// If neither works, do what's safe.
 	else if (coord_to.0, coord_from.1) != T::EMPTY_POS {
 		add(cmds, x_cmd, x_cnt);
 		add(cmds, y_cmd, y_cnt);
